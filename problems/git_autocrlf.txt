@@ -1,0 +1,5 @@
+git 换行的问题
+
+相关配置:
+    core.eol: 工作目录文本文件的换行符, 可选 lf crlf native 默认值 native
+    core.safecrlf:
