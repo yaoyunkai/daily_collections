@@ -1,0 +1,2 @@
+openai.organization = 'org-6CXyJnRtflxgfx2t8OjwR8lD'
+openai.api_key = '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'
