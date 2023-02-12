@@ -17,3 +17,8 @@ warning: in the working copy of '.gitignore', CRLF will be replaced by LF the ne
 相关配置:
     core.eol: 工作目录文本文件的换行符, 可选 lf crlf native 默认值 native
     core.safecrlf:
+    core.autocrlf: true input false
+
+跨平台配置:
+    $ git config --global core.autocrlf input
+    $ git config --global core.safecrlf true
