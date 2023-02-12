@@ -38,9 +38,9 @@ def human_datetime_delta(datetime_obj: datetime.datetime, mode='ZH'):
     :return:
     """
 
-    def _get_print(f_index, num):
+    def _get_print(f_index, _number):
         s_index = 1
-        if is_singular(num):
+        if is_singular(_number):
             s_index = 0
         if mode == 'ZH':
             s_index = 2
@@ -48,7 +48,7 @@ def human_datetime_delta(datetime_obj: datetime.datetime, mode='ZH'):
         if f_index == -1 or f_index == (len(STR_HUMAN_READABLE) - 1):
             return STR_HUMAN_READABLE[f_index][s_index]
 
-        return STR_HUMAN_READABLE[f_index][s_index].format(num)
+        return STR_HUMAN_READABLE[f_index][s_index].format(_number)
 
     if mode not in ['ZH', 'EN']:
         raise ValueError('language mode must be "ZH" "EN"')
