@@ -1,5 +1,19 @@
 git 换行的问题
 
+----------------------------------------------
+MAC     CR     \r
+linux   LF     \n
+win     CRLF   \r\n
+----------------------------------------------
+
+CRLF: Carriage Return Line Feed 回车换行
+
+warning: in the working copy of '.gitignore', CRLF will be replaced by LF the next time Git touches it
+
+参考链接:
+    https://blog.csdn.net/wq6ylg08/article/details/88761581/
+    https://blog.csdn.net/weixin_47181907/article/details/126949650
+
 相关配置:
     core.eol: 工作目录文本文件的换行符, 可选 lf crlf native 默认值 native
     core.safecrlf:
