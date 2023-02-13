@@ -4,33 +4,41 @@ read test data
 1. create model
 
 ----------------------------------------------------
-table fields
+table fields:
 
-rec_time
 tst_id
 bf_status
 
-sernum     40 upper
-uuttype    40 upper
-test_area  20 upper
-test_result  pass_fail  SPF
+rec_time
+sernum                  40 upper
+uuttype                 40 upper
+test_area               20 upper
+test_result             pass_fail  SPF
 run_time
 test_failure
 test_server
-
-test_mode PROD DEBUG
+test_mode               PROD DEBUG
 container
+
 username
 deviation
 
-tan
-hw_rev
-part_num
-
+testr1name
 testr1
-testr1_name
+testr2name
+testr2
+testr3name
+testr3
 
-pid
+tan
+part_num
+part_num2
+
+hw_rev
+hw_rev2
+hw_rev3
+
+product_id
 vid
 
 
