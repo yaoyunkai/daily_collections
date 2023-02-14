@@ -21,3 +21,6 @@ CREATE TABLE `test_record` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'The record create time in DB',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Test Record';
+
+
+select * from test_record where area = 'PCB2C' and record_time between '2021-10-01 00:00:00' and '2021-10-05 23:59:59';
