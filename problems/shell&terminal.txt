@@ -1,0 +1,16 @@
+terminal:
+    早期物理终端 -> 到现在的模拟终端
+
+shell
+    cmd
+    power shell
+    bash
+    sh
+    zsh
+
+console
+
+
+PTY: pseudo terminal            / 用户态
+VTY: Virtual Console: vty1 vty2 / 内核态
+
