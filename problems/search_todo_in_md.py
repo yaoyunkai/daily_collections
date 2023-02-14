@@ -5,7 +5,7 @@ get current line for todos
 
 return result:
 
-file_name lines: todo_string, then generate a file save them all in one place
+file_name lines: todo_string, then generate a file with datetime save them all in one place
 
 
 """
