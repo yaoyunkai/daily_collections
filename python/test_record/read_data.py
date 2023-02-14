@@ -41,6 +41,9 @@ hw_rev3
 product_id
 vid
 
+2. unique:
+sernum tst_id test_result
+
 
 """
 
