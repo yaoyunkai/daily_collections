@@ -3,7 +3,18 @@ import unittest
 import analysis_data
 
 
+def match_test_result(val):
+    return analysis_data.TEST_RESULT_PATTERN.match(val) is not None
+
+
 class AllTestCase(unittest.TestCase):
+
+    def test_result_match(self):
+        self.assertTrue(match_test_result('P'))
+        self.assertTrue(match_test_result('P,F'))
+        self.assertFalse(match_test_result('P,F,'))
+        self.assertTrue(match_test_result('P,F,S'))
+        self.assertTrue(match_test_result('P,F,S,G'))
 
     def test_check_date(self):
         self.assertFalse(analysis_data.check_date_string(''))
@@ -37,9 +48,10 @@ class AllTestCase(unittest.TestCase):
         self.assertEqual(analysis_data._deal_with_common_param(',,'), [])
         self.assertEqual(analysis_data._deal_with_common_param('PCBST,,'), [('PCBST', False)])
         self.assertEqual(analysis_data._deal_with_common_param(' PCBST  ,'), [('PCBST', False)])
-        self.assertEqual(analysis_data._deal_with_common_param(' PCB%%  ,'), [('PCB%', True)])
+        self.assertEqual(analysis_data._deal_with_common_param(' PCB%  ,'), [('PCB%', True)])
         self.assertEqual(analysis_data._deal_with_common_param(' PCB%  ,ASSY'), [('PCB%', True), ('ASSY', False)])
-        self.assertEqual(analysis_data._deal_with_common_param(' PCB%  ,ASSY,%%%%%%,'), [('PCB%', True), ('ASSY', False)])
+        self.assertEqual(analysis_data._deal_with_common_param(' PCB%  ,ASSY,%%%%%%,'),
+                         [('PCB%', True), ('ASSY', False)])
 
         # self.assertEqual(analysis_data._deal_with_common_param(None), [])
 

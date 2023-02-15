@@ -23,4 +23,18 @@ CREATE TABLE `test_record` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Test Record';
 
 
-select * from test_record where area = 'PCB2C' and record_time between '2021-10-01 00:00:00' and '2021-10-05 23:59:59';
+select record_time,
+       sernum,
+       uuttype,
+       area,
+       test_result,
+       run_time,
+       test_failure,
+       test_server,
+       test_container
+from test_record
+where record_time between '2021-10-01 00:00:00' and '2021-10-01 23:59:59'
+  and (area = 'ASSY' or area like 'PCB%')
+  and (uuttype = 'IE%')
+
+order by record_time;

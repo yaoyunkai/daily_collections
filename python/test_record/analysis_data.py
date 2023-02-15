@@ -22,10 +22,13 @@ import datetime
 import pprint
 import re
 
+from read_data import get_mysql_conn
+
 TEST_RESULT_PATTERN = re.compile(r'^[PSFA](,[PSFA])*$', )
 DATE_PATTERN = re.compile(r'^(\d{4})-(\d{1,2})-(\d{1,2})$')
 
 PARAM_SEPARATOR = ','
+COMMON_PARAMS_SPEC = ['sernum', 'uuttype', 'area', 'test_server']
 
 
 def check_date_string(date_string: str):
@@ -102,11 +105,10 @@ def _deal_with_params(params_dict: dict, yield_or_search=True):
     :param yield_or_search: if True for check yield else for check search
     :return:
     """
-    common_params_spec = ['sernum', 'uuttype', 'area', 'test_server']
     _final_result = {}
 
     # check common params
-    for param_name in common_params_spec:
+    for param_name in COMMON_PARAMS_SPEC:
         param = params_dict.get(param_name)
         if not param:
             continue
@@ -115,7 +117,7 @@ def _deal_with_params(params_dict: dict, yield_or_search=True):
             continue
         _final_result[param_name] = _formatted_param
     if not _final_result:
-        raise ValueError('must input at least one common params: {}'.format(common_params_spec))
+        raise ValueError('must input at least one common params: {}'.format(COMMON_PARAMS_SPEC))
 
     # check from_date and to_date
     from_date = get_date_from_string(params_dict.get('from_date', ''))
@@ -124,13 +126,13 @@ def _deal_with_params(params_dict: dict, yield_or_search=True):
         raise ValueError('must input from_date and to_date')
     if from_date > to_date:
         raise ValueError('from_date must less than to_date')
-    _final_result['from_date'] = from_date
-    _final_result['to_date'] = to_date
+    _final_result['from_date'] = datetime.datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0)
+    _final_result['to_date'] = datetime.datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59)
 
     # check special params
     if yield_or_search:
-        yield_type = params_dict.get('yield_type', 'fp')
-        view_type = params_dict.get('view_type', 'none')
+        yield_type = params_dict.get('yield_type') or 'fp'
+        view_type = params_dict.get('view_type') or 'none'
         if yield_type not in ['fp', 'test', 'board']:
             raise ValueError("yield_type must be 'fp', 'test', 'board'")
         if view_type not in ['none', 'month', 'week']:
@@ -139,12 +141,15 @@ def _deal_with_params(params_dict: dict, yield_or_search=True):
         _final_result['view_type'] = view_type
 
     else:
-        data_type = params_dict.get('data_type', 'test')
-        test_result = params_dict.get('test_result', 'P,F')
+        data_type = params_dict.get('data_type', ) or 'test'
+        test_result = params_dict.get('test_result', ) or 'P,F'
         if data_type not in ["test", "fp", "board"]:
             raise ValueError('data_type must be "test", "fp", "board"')
         if not TEST_RESULT_PATTERN.match(test_result):
             raise ValueError('test_result must be P,F,S,A')
+
+        test_result = list(set([i.strip() for i in test_result.split(',')]))
+
         _final_result['data_type'] = data_type
         _final_result['test_result'] = test_result
 
@@ -155,17 +160,51 @@ def get_yield(
         sernum='', uuttype='', area='', test_server='',
         from_date='', to_date='',
         yield_type='', view_type=''):
-    _result = _deal_with_params(locals(), yield_or_search=True)
-    pprint.pprint(_result)
+    params = _deal_with_params(locals(), yield_or_search=True)
+    pprint.pprint(params)
 
 
 def search_test_record(
         sernum='', uuttype='', area='', test_server='',
         from_date='', to_date='',
         data_type='', test_result=''):
-    pass
+    params_dict = _deal_with_params(locals(), yield_or_search=False)
+
+    sql_params = []
+    base_sql = """
+    select record_time, sernum, uuttype, area, test_result, run_time, test_failure, test_server, test_container
+    from test_record
+    where record_time between %s and %s
+    """
+
+    sql_params.append(params_dict['from_date'], )
+    sql_params.append(params_dict['to_date'], )
+
+    for param_name in COMMON_PARAMS_SPEC:
+        param = params_dict.get(param_name)
+        if not param:
+            continue
+        _tmp_arr = []
+        for item in param:
+            sql_params.append(item[0])
+            _tmp_arr.append(' {} {} %s '.format(param_name, 'LIKE' if item[1] else '='))
+        base_sql = base_sql + ' AND ({})'.format('or'.join(_tmp_arr))
+
+    base_sql = base_sql + ' AND test_result in %s order by record_time'
+    sql_params.append(params_dict['test_result'])
+
+    print(base_sql)
+    print(sql_params)
+
+    mysql_conn = get_mysql_conn()
+    cursor = mysql_conn.cursor()
+    cursor.execute(base_sql, sql_params)
+    test_records = cursor.fetchall()
+    for record in test_records:
+        print(record)
 
 
 if __name__ == '__main__':
-    get_yield(uuttype='IE%', from_date='2020-1-1', to_date='2022-2-1',
-              yield_type='fp', view_type='none')
+    # get_yield(uuttype='IE%', from_date='2020-1-1', to_date='2022-2-1', yield_type='fp', view_type='none')
+    search_test_record(uuttype='IE-%', area='PCBST,PCB2C', from_date='2021-10-1', to_date='2021-10-1',
+                       test_result='P,F', data_type='test')
