@@ -19,6 +19,7 @@ test_result:
 
 """
 import datetime
+import pprint
 import re
 
 TEST_RESULT_PATTERN = re.compile(r'^[PSFA](,[PSFA])*$', )
@@ -154,7 +155,8 @@ def get_yield(
         sernum='', uuttype='', area='', test_server='',
         from_date='', to_date='',
         yield_type='', view_type=''):
-    pass
+    _result = _deal_with_params(locals(), yield_or_search=True)
+    pprint.pprint(_result)
 
 
 def search_test_record(
@@ -165,4 +167,5 @@ def search_test_record(
 
 
 if __name__ == '__main__':
-    pass
+    get_yield(uuttype='IE%', from_date='2020-1-1', to_date='2022-2-1',
+              yield_type='fp', view_type='none')
