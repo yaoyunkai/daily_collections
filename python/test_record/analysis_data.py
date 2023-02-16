@@ -16,6 +16,19 @@ view type:
 test_result:
     default is P F , optional is A : adt sampling, S start record
 
+---------------------------------------------------------------------------
+Test Yield: 这个最简单，不用做任何处理，按时间段来取数据即可
+
+F, P, T : test_result 为 F P & FP
+
+
+first pass yield: 获取数据：时间段，该时间段内，某个工站的某个SN的第一笔测试记录。
+F:  记录中每个SN 只要有Fail的 SN数量
+P:  记录中每个SN的所有工站都是PASS的 SN数量
+T:  记录中所有不重复的SN的数量
+
+board yield: 该时间段内，某个工站的某个SN的最后一笔测试状态
+
 
 """
 import datetime

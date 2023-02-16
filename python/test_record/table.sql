@@ -23,6 +23,10 @@ CREATE TABLE `test_record` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Test Record';
 
 
+/*
+search test record
+
+*/
 select record_time,
        sernum,
        uuttype,
@@ -38,3 +42,31 @@ where record_time between '2021-10-01 00:00:00' and '2021-10-01 23:59:59'
   and (uuttype = 'IE%')
 
 order by record_time;
+
+
+/*
+compute first pass yield
+
+*/
+SELECT
+    uuttype,
+    SUM(IF(test_result = 'P', 1, 0)) AS 'pass_count',
+    SUM(IF(test_result = 'F', 1, 0)) AS 'fail_count',
+    SUM(IF(test_result IN ('P' , 'F'), 1, 0)) AS 'total_count'
+FROM
+    (SELECT
+        MIN(record_time) AS record_time,
+            sernum,
+            uuttype,
+            area,
+            test_result,
+            run_time,
+            test_failure,
+            test_server,
+            test_container
+    FROM
+        test_record
+    WHERE
+        area = 'PCB2C'
+    GROUP BY area , sernum) x
+GROUP BY uuttype;

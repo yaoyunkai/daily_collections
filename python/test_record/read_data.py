@@ -81,6 +81,8 @@ def read_json_data(file_path, _petra=True):
     fp = open(file_path, mode='r')
     data = json.load(fp)
 
+    data = data['results']['data']
+
     json_result_list = []
 
     for idx, item in enumerate(data):
@@ -96,7 +98,7 @@ def read_json_data(file_path, _petra=True):
         _dict['test_failure'] = item['attributes'].get('TEST', '')
         _dict['test_server'] = item['machine']
         _dict['test_container'] = item['attributes'].get('CONTAINER', 'NULL')
-        _dict['test_mode'] = item['mode']
+        _dict['test_mode'] = item.get('mode') or 'PROD0'
         _dict['username'] = item['attributes'].get('USERNAME', 'NULL')
         _dict['deviation'] = item['attributes'].get('DEVIATION', 'D000000')
         _dict['testr1name'] = item['attributes'].get('TESTR1NAME', '')
@@ -114,4 +116,8 @@ def read_json_data(file_path, _petra=True):
 
 
 if __name__ == '__main__':
+    # rows = read_json_data(r'xxx')
+    # rows = [list(i.values()) for i in rows]
+    #
+    # insert_test_records(rows)
     pass
