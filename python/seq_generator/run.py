@@ -56,9 +56,45 @@ class SerialNumberGenerator:
         return _number
 
 
-if __name__ == '__main__':
-    for i in range(100000000, 100000000 + 500):
-        _ret = SerialNumberGenerator.convert_to_sequence(i)
-        _num = SerialNumberGenerator.convert_to_numbers(_ret)
+class ExcelColumnGenerator:
+    # A == 1  z == 26
+    EXCEL_SEQ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    EXCEL_SEQ_PATTERN = re.compile(r'^[A-Z]+$')
 
-        print('{} - {} - {}'.format(i, _ret, _num))
+    @classmethod
+    def excel_title_to_number(cls, sequence: str):
+        if not cls.EXCEL_SEQ_PATTERN.match(sequence):
+            raise ValueError('sequence is not formatted')
+        _number = 0
+        seq_str = sequence[::-1]
+        for idx, ch in enumerate(seq_str):
+            _number += (len(cls.EXCEL_SEQ) ** idx) * (cls.EXCEL_SEQ.find(ch) + 1)
+        return _number
+
+    @classmethod
+    def excel_number_to_title(cls, number: int):
+        if number <= 0:
+            raise ValueError('number must be >= 0')
+        _sequence_arr = []
+        while number > 0:
+            a0 = (number - 1) % len(cls.EXCEL_SEQ) + 1
+            _sequence_arr.append(cls.EXCEL_SEQ[a0 - 1])
+            number = (number - a0) // len(cls.EXCEL_SEQ)
+        _sequence_arr.reverse()
+        return ''.join(_sequence_arr)
+
+
+if __name__ == '__main__':
+    # for i in range(100000000, 100000000 + 500):
+    #     _ret = SerialNumberGenerator.convert_to_sequence(i)
+    #     _num = SerialNumberGenerator.convert_to_numbers(_ret)
+    #
+    #     print('{} - {} - {}'.format(i, _ret, _num))
+    print(SerialNumberGenerator.convert_to_numbers('ZZZZ'))
+    print(SerialNumberGenerator.convert_to_sequence(1336335))
+
+    print(ExcelColumnGenerator.excel_title_to_number('AAZ'))
+    print(ExcelColumnGenerator.excel_number_to_title(728))
+
+    print(ExcelColumnGenerator.excel_title_to_number('A'))
+    print(ExcelColumnGenerator.excel_number_to_title(1))
