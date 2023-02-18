@@ -2,13 +2,15 @@
 
 > 个人开发过程中的日常codes
 
-python 编写单元测试
+## TODO List
 
-excel utils
+- [x] [Markdown 语法](https://support.typora.io/zh/Markdown-Reference/)
+- [X] python 编写单元测试
+- [ ] excel utils
+- [ ] 用check约束条件来确保column中的列
+- [ ] make demo test record
+- [x] RLock 与 Lock的区别
+- [ ] logging 模块的使用
 
-用check约束条件来确保column中的列
-
-make demo test record
-
-RLock 与 Lock的区别
+![back](./.assets/img.png)
 
