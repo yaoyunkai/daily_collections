@@ -11,6 +11,9 @@
 - [ ] make demo test record
 - [x] RLock 与 Lock的区别
 - [ ] logging 模块的使用
+- [ ] 周数的计算
+- [x] [python format用法](https://blog.csdn.net/u014770372/article/details/76021988)
+- [ ] 序列号生成(支持从0或者从1生成)
 
 ![back](./.assets/img.png)
 
