@@ -77,6 +77,7 @@ class ExcelColumnGenerator:
             raise ValueError('number must be >= 0')
         _sequence_arr = []
         while number > 0:
+            # 由于进制从1开始，所以减一后取模再把数字补1
             a0 = (number - 1) % len(cls.EXCEL_SEQ) + 1
             _sequence_arr.append(cls.EXCEL_SEQ[a0 - 1])
             number = (number - a0) // len(cls.EXCEL_SEQ)
@@ -96,5 +97,5 @@ if __name__ == '__main__':
     print(ExcelColumnGenerator.excel_title_to_number('AAZ'))
     print(ExcelColumnGenerator.excel_number_to_title(728))
 
-    print(ExcelColumnGenerator.excel_title_to_number('A'))
+    print(ExcelColumnGenerator.excel_title_to_number('AASR'))
     print(ExcelColumnGenerator.excel_number_to_title(1))
