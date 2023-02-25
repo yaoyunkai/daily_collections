@@ -46,40 +46,28 @@ where record_time between '2021-10-01 00:00:00' and '2021-10-01 23:59:59'
 
 order by record_time;
 
-
 /*
-compute first pass yield
+ compute first pass yield
 
-*/
-SELECT uuttype,
-       SUM(IF(test_result = 'P', 1, 0))         AS 'pass_count',
-       SUM(IF(test_result = 'F', 1, 0))         AS 'fail_count',
-       SUM(IF(test_result IN ('P', 'F'), 1, 0)) AS 'total_count'
-FROM (SELECT MIN(record_time) AS record_time,
-             sernum,
-             uuttype,
-             area,
-             test_result,
-             run_time,
-             test_failure,
-             test_server,
-             test_container
-      FROM test_record
-      WHERE area = 'PCBFT'
-      GROUP BY area, sernum) x
-GROUP BY uuttype;
+ */
+select t1.uuttype,
+       t1.area,
+       sum(IF(t1.test_result = 'P', 1, 0))         as 'pass_count',
+       sum(IF(t1.test_result = 'F', 1, 0))         as 'fail_count',
+       sum(IF(t1.test_result in ('P', 'F'), 1, 0)) as 'total_count'
+from test_record t1
+         inner join (select min(record_time) as record_time, sernum, area
+                     from test_record
+                     group by area, sernum) t2
+                    on t1.area = t2.area and t1.sernum = t2.sernum and t1.record_time = t2.record_time
+group by t1.uuttype, t1.area;
 
-select uuttype,
-       area,
-       SUM(IF(test_result = 'P', 1, 0))         AS 'pass_count',
-       SUM(IF(test_result = 'F', 1, 0))         AS 'fail_count',
-       SUM(IF(test_result IN ('P', 'F'), 1, 0)) AS 'total_count'
-from (SELECT min(record_time) as record_time,
-             sernum,
-             uuttype,
-             area,
-             test_result
-      FROM test_record where area = 'PCBST'
-      group by area, sernum
-      order by record_time) x
-group by area, uuttype;
+
+select t1.record_time, t1.sernum, t1.uuttype, t1.area, t1.test_result
+from test_record t1
+         inner join (select min(record_time) as record_time, sernum, area
+                     from test_record
+                     where uuttype = 'IE-3400-8T2S-A'
+                     group by area, sernum) t2
+                    on t1.area = t2.area and t1.sernum = t2.sernum and t1.record_time = t2.record_time
+order by record_time
