@@ -6,7 +6,7 @@
 - tornado & Django source code 
 - websocket
 - redis in action
-- python discriptor
+- python descriptor
 - makefile用法
 - objdump的用法
 - 原码补码反码
