@@ -35,7 +35,7 @@ import datetime
 import pprint
 import re
 
-from read_data import get_mysql_conn
+from insert_data import get_mysql_conn
 
 TEST_RESULT_PATTERN = re.compile(r'^[PSFA](,[PSFA])*$', )
 DATE_PATTERN = re.compile(r'^(\d{4})-(\d{1,2})-(\d{1,2})$')
