@@ -19,3 +19,6 @@ https://blog.csdn.net/qq_45760401/article/details/125134757
 7. 命令提示符问题
     ubuntu 命令提示符和 centos命令提示符不一致
     [${debian_chroot:+($debian_chroot)}\u@\h:\w]\$
+    [\u@\h \W]\$
+
+
