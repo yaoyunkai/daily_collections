@@ -35,4 +35,16 @@ https://blog.csdn.net/qq_45760401/article/details/125134757
 10. install httpd:
     https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-centos-7
     https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-centos-7
+        curl -sSLO https://dev.mysql.com/get/mysql80-community-release-el7-7.noarch.rpm
+        sudo rpm -ivh mysql80-community-release-el7-7.noarch.rpm
 
+        sudo grep 'temporary password' /var/log/mysqld.log
+
+11. sudoers
+    https://blog.csdn.net/LelemamaAnne/article/details/113624097
+
+12 disable selinux:
+    /etc/sysconf/selinux
+
+13 disable firewall
+    systemctl stop firewall.service
