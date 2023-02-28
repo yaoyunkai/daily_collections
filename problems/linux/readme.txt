@@ -21,4 +21,18 @@ https://blog.csdn.net/qq_45760401/article/details/125134757
     [${debian_chroot:+($debian_chroot)}\u@\h:\w]\$
     [\u@\h \W]\$
 
+8. install python3.6
+    https://www.rosehosting.com/blog/how-to-install-python-3-6-4-on-centos-7/
+
+    sudo yum install -y https://repo.ius.io/ius-release-el7.rpm
+    sudo yum update
+    sudo yum install -y python36u python36u-libs python36u-devel python36u-pip
+    python3.6 -V
+
+9. install redis
+    https://zhuanlan.zhihu.com/p/34527270
+
+10. install httpd:
+    https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-centos-7
+    https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-centos-7
 
