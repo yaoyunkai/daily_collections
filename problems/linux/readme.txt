@@ -34,6 +34,8 @@ https://blog.csdn.net/qq_45760401/article/details/125134757
 
 10. install httpd:
     https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-centos-7
+    https://blog.csdn.net/u013032788/article/details/105361380
+
     https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-centos-7
         curl -sSLO https://dev.mysql.com/get/mysql80-community-release-el7-7.noarch.rpm
         sudo rpm -ivh mysql80-community-release-el7-7.noarch.rpm
@@ -48,3 +50,6 @@ https://blog.csdn.net/qq_45760401/article/details/125134757
 
 13 disable firewall
     systemctl stop firewall.service
+
+14. 升级git
+    https://blog.csdn.net/SaberJYang/article/details/125501124
