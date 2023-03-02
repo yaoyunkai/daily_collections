@@ -1,4 +1,6 @@
 """
+protocol: https://peps.python.org/pep-3333/
+
 继承层次:
 
 BaseServer (socketserver stub)
