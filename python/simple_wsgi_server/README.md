@@ -186,8 +186,6 @@ handler.request_handler = self      # backpointer for logging
 handler.run(self.server.get_app())
 ```
 
-
-
 2, RequestHandler 每个请求会实例化一次。
 
 ```
@@ -201,3 +199,20 @@ BaseHTTPRequestHandler.parse_request:
 
 ```
 
+## Django Dev Server
+
+```
+Django Dev Simple Server:
+
+Server class: WSGIServer(simple_server.WSGIServer)
+
+RequestHandlerClass: WSGIRequestHandler(simple_server.WSGIRequestHandler)
+    request handler 委派 ServerHandler(simple_server.ServerHandler) 处理请求
+
+Server App: WSGIHandler or StaticFilesHandler / only instance once during server running
+
+BaseHandler (django.core.handlers.base)
+    WSGIHandler(base.BaseHandler) (django.core.handlers.wsgi)
+        FSFilesHandler(WSGIHandler) (django.test.testcases)
+        StaticFilesHandler(StaticFilesHandlerMixin, WSGIHandler) (django.contrib.staticfiles.handlers)
+```
