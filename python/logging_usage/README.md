@@ -205,15 +205,17 @@ DEFAULT_LOGGING = {
 }
 ```
 
-log处理过程中，第一次filter是Logger.filter, 第二次filter是 Handler.filter，那么两次filter的目的是什么？为了让不同的handler来决定是否处理这个log。
+1, log处理过程中，第一次filter是Logger.filter, 第二次filter是 Handler.filter，那么两次filter的目的是什么？为了让不同的handler来决定是否处理这个log。
 
-如果自己要求自定义配置：可以把django配置copy过来。在源码里面，如果是dev模式，logging会配置两次，Logger对象的实例不变，但是对应的filters和handlers会被重新实例化。
+2, 如果自己要求自定义配置：可以把django配置copy过来。在源码里面，如果是dev模式，logging会配置两次，Logger对象的实例不变，但是对应的filters和handlers会被重新实例化。
 
-logging模块在多进程下，同一个FileHandler写入文件的问题??? 是否可以根据进程号来修改文件名????
+3, logging模块在多进程下，同一个FileHandler写入文件的问题??? 是否可以根据进程号来修改文件名????
 
-好像有问题文件名会非常多??? 在uwsgi apache ... 等服务器部署时是不是思考用logger server的方式来进行。
+好像有问题 文件名会非常多??? 在uwsgi apache ... 等服务器部署时是不是思考用logger server的方式来进行。
 
-在Handler的filter中，可以通过额外的参数来判断是否记录到文件中，或者进行其他操作。
+当使用 [Gunicorn](https://gunicorn.org/) 或 [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/) (或其他类似工具) 来部署 Web 应用时，会创建多个工作进程来处理客户端请求。 在这种环境下，要避免在你的 Web 应用中直接创建基于文件的处理句柄。 而应改为使用一个 [`SocketHandler`](https://docs.python.org/zh-cn/3/library/logging.handlers.html#logging.handlers.SocketHandler) 将来自 Web 应用的日志发送到在单独进程中运行的监听器。
+
+4, 在Handler的filter中，可以通过额外的参数来判断是否记录到文件中，或者进行其他操作。
 
 ```python
 get_logger_details(logging.root)
