@@ -53,3 +53,23 @@ https://blog.csdn.net/qq_45760401/article/details/125134757
 
 14. 升级git
     https://blog.csdn.net/SaberJYang/article/details/125501124
+
+15. centos7 创建桌面快捷方式:
+    https://www.bbsmax.com/A/RnJWP37g5q/
+
+        [Desktop Entry]
+        Version=1.0 #版本信息
+        Name=PhpStrom2018.1 #桌面显示的名称
+        Exec=/usr/bin/phpstorm %U #执行文件路径
+        Terminal=false
+        X-MultipleArgs=false
+        Type=Application
+        Icon=/usr/local/phpstorm/bin/phpstorm.png #桌面图标路径
+        Categories=Network;WebBrowser; #分类
+        MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
+        StartupWMClass=Chromium-browser
+        StartupNotify=true
+        Keywords=web;browser;internet;
+        Actions=new-window;new-private-window;
+        X-Desktop-File-Install-Version=0.23
+
