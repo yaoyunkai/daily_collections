@@ -5,6 +5,9 @@ uut_type  board_qty ete area1 area2 area3
 
 _Total:   board_qty  ete area1 area2 area3
 
+FP: include sampling data
+
+test: not include sampling data
 
 
 """

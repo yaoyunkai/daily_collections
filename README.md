@@ -16,3 +16,12 @@
 - [x] 序列号生成(支持从0或者从1生成)
 - [x] [markdown数学公式](https://blog.csdn.net/weixin_42782150/article/details/104878759)
 - [ ] 根据预先制定的规则，打卡时间和请假记录计算每天的考勤
+- [ ] 怎么样写阅读源码的笔记? UML?
+
+---------
+
+https://pegasuswang.github.io/booknotes/
+
+https://staruml.io/
+
+UML软件
