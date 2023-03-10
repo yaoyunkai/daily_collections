@@ -607,3 +607,5 @@ HDEL key field [field ...]   删除字典中的键
 
 ```
 
+## Sorted Set
+
