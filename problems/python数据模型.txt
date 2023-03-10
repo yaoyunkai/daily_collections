@@ -1,0 +1,52 @@
+特殊方法:
+
+    属性访问:
+        __getattr__
+        __getattribute__
+        __setattr__
+
+    描述器:
+        __get__
+        __set__
+        __delete__
+
+    __slots__
+
+导入系统
+https://docs.python.org/zh-cn/3/reference/import.html
+
+importlib.import_module()
+__import__()
+
+
+Module:
+    Technically, a package is a Python module with a __path__ attribute.
+    要注意的一个重点概念是所有包都是模块，但并非所有模块都是包。 或者换句话说，包只是一种特殊的模块。
+    特别地，任何具有 __path__ 属性的模块都会被当作是包。
+
+    __name__
+    __loader__
+    __package__
+    __path__
+    __spec__
+    __file__
+
+
+    常规包和命令空间包
+
+    常规包通常以一个包含 __init__.py 文件的目录形式实现。
+    当一个常规包被导入时，这个 __init__.py 文件会隐式地被执行，它所定义的对象会被绑定到该包命名空间中的名称。
+
+    命令空间包: https://peps.python.org/pep-0420/
+
+sys.modules
+    如果之前导入过 foo.bar.baz，则 sys.modules
+    将包含 foo, foo.bar 和 foo.bar.baz 条目。
+    每个键的值就是相应的模块对象。
+
+sys.path
+
+
+
+加载一个子模块时，父模块的命名空间中会添加一个对子模块对象的绑定。
+例如，如果包 spam 有一个子模块 foo，则在导入 spam.foo 之后，spam 将具有一个 绑定到相应子模块的 foo 属性。
