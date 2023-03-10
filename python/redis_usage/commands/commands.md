@@ -609,3 +609,52 @@ HDEL key field [field ...]   删除字典中的键
 
 ## Sorted Set
 
+有序集合：不会有相同的成员member，但是会有相同的分数score
+
+分数越小，越靠近头部。
+
+```
+
+### 都是获取元素，只是条件不一样。
+ZRANGE key start stop [WITHSCORES]
+ZRANGEBYLEX key min max [LIMIT offset count]
+ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
+ZREVRANGE key start stop [WITHSCORES]
+ZREVRANGEBYLEX key max min [LIMIT offset count]
+ZREVRANGEBYSCORE key max min [WITHSCORES] [LIMIT offset count]
+
+
+
+BZPOPMAX key [key ...] timeout
+BZPOPMIN key [key ...] timeout
+ZPOPMAX key [count]
+ZPOPMIN key [count]
+
+ZREM key member [member ...]
+ZREMRANGEBYLEX key min max
+ZREMRANGEBYRANK key start stop
+ZREMRANGEBYSCORE key min max
+
+
+ZADD key [NX|XX] [CH] [INCR] score member [score member ...]
+ZINCRBY key increment member
+
+
+ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight] [AGGREGATE SUM|MIN|MAX]
+ZUNIONSTORE destination numkeys key [key ...] [WEIGHTS weight] [AGGREGATE SUM|MIN|MAX]
+
+```
+
+### 获取信息，返回标量
+
+```
+ZCARD key    返回元素的数量
+ZCOUNT key min max   根据分数区间统计元素个数
+ZLEXCOUNT key min max
+ZSCORE key member     获取元素的分数，不存在则返回null
+ZRANK key member        返回元素的排序，从下标0开始，如果元素不存在则返回null
+ZREVRANK key member     返回元素的反向排序，从下标0开始，如果元素不存在则返回null
+
+ZSCAN key cursor [MATCH pattern] [COUNT count]
+```
+
