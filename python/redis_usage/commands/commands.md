@@ -4,6 +4,116 @@
 
 当这些命令操作错误的key类型时会报错。
 
+## Generic
+
+### DEL
+
+```
+DEL key [key ...]
+```
+
+### DUMP / RESTORE
+
+```
+DUMP key
+序列化key的内容
+
+127.0.0.1:6379> dump s3
+"\x0c33\x00\x00\x00/\x00\x00\x00\x0e\x00\x00\x01a\x03\xfc\x02\x01b\x03\xfd\x02\x01c\x03\xfe\r\x03\x01f\x03\xfe\x0e\x03\x01g\x03\xfe\x10\x03\x01h\x03\xfe\x12\x03\x01d\x03\xfe\x1a\xff\t\x00O\x9ew\xf8\xc8\x0b\x83+"
+
+RESTORE key ttl serialized-value [REPLACE] [ABSTTL] [IDLETIME seconds] [FREQ frequency]
+
+```
+
+### EXISTS
+
+```
+EXISTS key [key ...]
+判断一个key是否存在
+
+```
+
+### 键过期时间
+
+| 命令      | 描述                                             |
+| --------- | ------------------------------------------------ |
+| PERSIST   | 移除键的过期时间                                 |
+| TTL       | 查看键距离过期还有多少秒                         |
+| EXPIRE    | 给键指定过期时间(秒)                             |
+| EXPIREAT  | 将给定键的过期时间设置为给定unix时间戳           |
+| PTTL      | 距离过期时间还有多少毫秒                         |
+| PEXPIRE   | 给键指定过期的毫秒数                             |
+| PEXPIREAT | 将一个毫秒精度的unix时间戳设置为给定键的过期时间 |
+
+```
+127.0.0.1:6379> ttl s3
+(integer) -1
+127.0.0.1:6379> ttl s3
+(integer) -1
+127.0.0.1:6379> PEXPIRE s3 600000
+(integer) 1
+127.0.0.1:6379> ttl s3
+(integer) 595
+127.0.0.1:6379> ttl s3
+(integer) 594
+127.0.0.1:6379> ttl s3
+(integer) 592
+127.0.0.1:6379> pttl s3
+(integer) 588470
+127.0.0.1:6379> pttl s3
+(integer) 587497
+127.0.0.1:6379> persist s3
+(integer) 1
+127.0.0.1:6379> ttl s3
+(integer) -1
+127.0.0.1:6379>
+```
+
+### KEYS
+
+```
+KEYS pattern
+不要在生产环境中使用次命令，考虑使用SCAN
+```
+
+Supported glob-style patterns:
+
+- `h?llo` matches `hello`, `hallo` and `hxllo`
+- `h*llo` matches `hllo` and `heeeello`
+- `h[ae]llo` matches `hello` and `hallo,` but not `hillo`
+- `h[^e]llo` matches `hallo`, `hbllo`, ... but not `hello`
+- `h[a-b]llo` matches `hallo` and `hbllo`
+
+### MOVE
+
+```
+MOVE key db
+将一个key移动到另一个db
+
+```
+
+### RANDOMKEY
+
+随机获取一个key
+
+### RENAME
+
+```
+RENAME key newkey
+RENAMENX key newkey Rename a key, only if the new key does not exist
+
+```
+
+### SORT
+
+```
+TODO: sort指令的使用方式
+```
+
+### TYPE
+
+获取key的类型
+
 ## Strings
 
 ### APPEND
@@ -809,5 +919,95 @@ ZUNION numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE <SUM | MIN
 12) "18"
 13) "d"
 14) "26"
+```
+
+## Transactions
+
+```
+DISCARD -
+summary: Discard all commands issued after MULTI
+
+EXEC -
+summary: Execute all commands issued after MULTI
+
+MULTI -
+summary: Mark the start of a transaction block
+
+UNWATCH -
+summary: Forget about all watched keys
+
+WATCH key [key ...]
+summary: Watch the given keys to determine execution of the MULTI/EXEC block
+```
+
+## Connection
+
+```
+AUTH password
+summary: Authenticate to the server
+
+ECHO message
+summary: Echo the given string
+
+PING [message]
+summary: Ping the server
+
+QUIT -
+summary: Close the connection
+
+SELECT index
+summary: Change the selected database for the current connection
+
+SWAPDB index index
+summary: Swaps two Redis databases
+```
+
+## Server
+
+```
+client getname 
+client setname conn-name
+client id
+client list
+CLIENT KILL [ip:port] [ID client-id] [TYPE normal|master|slave|pubsub] [ADDR ip:port] [SKIPME yes/no]
+
+client pause timeout
+client reply on|off|skip
+
+command 获取Redis命令详细信息数组
+command count
+command info command-name
+
+debug object key
+Value at:00007FCDBB028620 refcount:1 encoding:ziplist serializedlength:34 lru:797372 lru_seconds_idle:2440
+
+info: server clients memory persistence stats replication cpu cluster keyspace
+
+time: 返回server 时间
+```
+
+## Scripting
+
+```
+EVAL script numkeys key [key ...] arg [arg ...]
+summary: Execute a Lua script server side
+
+EVALSHA sha1 numkeys key [key ...] arg [arg ...]
+summary: Execute a Lua script server side
+
+SCRIPT DEBUG YES|SYNC|NO
+summary: Set the debug mode for executed scripts.
+
+SCRIPT EXISTS sha1 [sha1 ...]
+summary: Check existence of scripts in the script cache.
+
+SCRIPT FLUSH -
+summary: Remove all the scripts from the script cache.
+
+SCRIPT KILL -
+summary: Kill the script currently in execution.
+
+SCRIPT LOAD script
+summary: Load the specified Lua script into the script cache.
 ```
 
