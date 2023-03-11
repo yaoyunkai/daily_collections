@@ -613,9 +613,90 @@ HDEL key field [field ...]   删除字典中的键
 
 分数越小，越靠近头部。
 
+由于每个元素都是唯一的，所以同一元素不能在排序集中重复，但可以添加多个得分相同的不同元素。
+
+当多个元素具有相同的分数时，它们将按字典顺序排序(它们仍然按照分数作为第一个键进行排序，但是，在局部，具有相同分数的所有元素将相对地按字典顺序排序)。
+
+### ZADD
+
+```
+ZADD key [NX | XX] [GT | LT] [CH] [INCR] score member [score member...]
+将具有指定分数的所有指定成员添加到存储在key处的排序集。可以指定多个分数/成员对。
+如果指定的成员已经是排序集的成员，则更新分数，并将元素重新插入到正确的位置，以确保正确的排序。
+score应该是双精度浮点数的字符串表示形式。+inf和-inf值也是有效值。
+XX: 只更新已经存在的元素。不要添加新元素。
+NX: 只添加新元素。不要更新已经存在的元素。
+CH: 修改返回值的表示方式，将返回值从添加的新元素数量修改为更改的元素总数。更改的元素是新添加的元素和已经存在的元素并且元素的分数已经更新。
+
+
 ```
 
-### 都是获取元素，只是条件不一样。
+### ZCARD
+
+```
+返回有序集中元素的个数。
+当key不存在时返回0
+当key的类型不满足要求是报错
+
+```
+
+### ZCOUNT
+
+```
+ZCOUNT key min max
+返回排序集中得分在min和max之间的元素个数。
+
+127.0.0.1:6379> zcount s1 -inf +inf
+(integer) 4
+```
+
+### ZLEXCOUNT
+
+当一个已排序集中的所有元素都以相同的分数插入时，为了强制按字典顺序排序，该命令返回已排序集中在key处的元素数量，其值介于min和max之间。
+
+元素被认为是按字节顺序从低到高的字符串排列的，如果公共部分相同，则长字符串被认为大于短字符串。
+
+如果排序集中的元素具有不同的分数，则返回的元素未指定。
+
+```
+ZLEXCOUNT key min max
+返回排序集中字母在min和max之间的元素个数。
+min max 必须以( [ 开头，以确定是否是包含关系。min和max的特殊值+或-具有特殊含义或正无穷和负无穷字符串.
+
+127.0.0.1:6379> zlexcount s1 - +
+(integer) 4
+127.0.0.1:6379> zlexcount s1 [a [b
+(integer) 2
+127.0.0.1:6379> zlexcount s1 [a (b
+(integer) 1
+```
+
+### ZSCORE
+
+```
+ZSCORE key member
+
+Returns the score of member in the sorted set at key.
+If member does not exist in the sorted set, or key does not exist, nil is returned.
+```
+
+### ZRANK / ZREVRANK
+
+```
+zrank key member
+zrevrank key member
+
+返回存储在key的已排序集合中成员的秩，分数从低到高排序。
+排名(或索引)以0为基础，这意味着得分最低的成员的排名为0。
+```
+
+### ZSCAN
+
+See [`SCAN`](https://redis.io/commands/scan) for `ZSCAN` documentation.
+
+### ZRANGE related
+
+```
 ZRANGE key start stop [WITHSCORES]
 ZRANGEBYLEX key min max [LIMIT offset count]
 ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
@@ -623,38 +704,110 @@ ZREVRANGE key start stop [WITHSCORES]
 ZREVRANGEBYLEX key max min [LIMIT offset count]
 ZREVRANGEBYSCORE key max min [WITHSCORES] [LIMIT offset count]
 
+以上命令都是获取有序集的成员。
 
+ZRANGEBYLEX key min max [LIMIT offset count]
+limit: 类似msyql中的 offset count
 
+127.0.0.1:6379> zrangebylex s1 - + limit 1 2
+1) "b"
+2) "c"
+
+------------------------------------------------------
+ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
+min max 可以是 -inf +inf, 还有可选的前缀 ( 用来表示开区间
+
+```
+
+### ZPOP related
+
+```
 BZPOPMAX key [key ...] timeout
 BZPOPMIN key [key ...] timeout
 ZPOPMAX key [count]
 ZPOPMIN key [count]
 
+--------------------------------------------
+BZPOP是阻塞模式，可以选择多个key，类似于BLPOP
+
+127.0.0.1:6379> zpopmin s5 4
+(empty list or set)
+127.0.0.1:6379> zpopmin s1 2
+1) "a"
+2) "0"
+3) "b"
+4) "0"
+```
+
+### ZREM related
+
+```
 ZREM key member [member ...]
 ZREMRANGEBYLEX key min max
 ZREMRANGEBYRANK key start stop
 ZREMRANGEBYSCORE key min max
 
+移除元素，按照不同的方式
+```
 
-ZADD key [NX|XX] [CH] [INCR] score member [score member ...]
+### ZINCRBY
+
+```
 ZINCRBY key increment member
 
+Increments the score of member in the sorted set stored at key by increment. 
+return: return new score
 
+```
+
+### ZUNIONSTORE / ZINTERSTORE
+
+```
 ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight] [AGGREGATE SUM|MIN|MAX]
 ZUNIONSTORE destination numkeys key [key ...] [WEIGHTS weight] [AGGREGATE SUM|MIN|MAX]
 
-```
+在6.2.0 版本新增了如下commands:
+ZDIFF numkeys key [key ...] [WITHSCORES]
+ZDIFFSTORE destination numkeys key [key ...]
+ZINTER numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE <SUM | MIN | MAX>] [WITHSCORES]
+ZUNION numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE <SUM | MIN | MAX>] [WITHSCORES]
 
-### 获取信息，返回标量
-
-```
-ZCARD key    返回元素的数量
-ZCOUNT key min max   根据分数区间统计元素个数
-ZLEXCOUNT key min max
-ZSCORE key member     获取元素的分数，不存在则返回null
-ZRANK key member        返回元素的排序，从下标0开始，如果元素不存在则返回null
-ZREVRANK key member     返回元素的反向排序，从下标0开始，如果元素不存在则返回null
-
-ZSCAN key cursor [MATCH pattern] [COUNT count]
+127.0.0.1:6379> zadd s2 5 d 6 d 7 f 8 g 9 h
+(integer) 0
+127.0.0.1:6379> zrange s2 0 -1 withscores
+1) "d"
+2) "6"
+3) "f"
+4) "7"
+5) "g"
+6) "8"
+7) "h"
+8) "9"
+127.0.0.1:6379> zrange s1 0 -1 withscores
+1) "a"
+2) "11"
+3) "b"
+4) "12"
+5) "c"
+6) "13"
+7) "d"
+8) "14"
+127.0.0.1:6379> ZUNIONSTORE s3 2 s1 s2 weights 1 2 aggregate sum
+(integer) 7
+127.0.0.1:6379> zrange s3 0 -1 withscores
+ 1) "a"
+ 2) "11"
+ 3) "b"
+ 4) "12"
+ 5) "c"
+ 6) "13"
+ 7) "f"
+ 8) "14"
+ 9) "g"
+10) "16"
+11) "h"
+12) "18"
+13) "d"
+14) "26"
 ```
 
