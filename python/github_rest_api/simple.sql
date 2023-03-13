@@ -1,14 +1,12 @@
 create table demo3.github_repo
 (
-    tb_id            int auto_increment
-        primary key,
-    id               int          not null comment 'Repo id',
-    name             varchar(100) not null comment 'repo name',
-    full_name        varchar(255) not null,
+    id               int          not null auto_increment primary key,
+    `name`           varchar(100) not null comment 'repo name',
+    full_name        varchar(100) not null,
     private          tinyint(1)   not null,
     owner_id         int          not null comment 'this is a fk for github_user',
     html_url         varchar(255) not null,
-    description      text         not null,
+    `description`    text         not null,
     fork             tinyint(1)   not null,
     url              varchar(255) not null,
     branches_url     varchar(255) not null,
@@ -24,32 +22,38 @@ create table demo3.github_repo
     homepage         varchar(255) not null,
     stargazers_count int          not null,
     watchers_count   int          not null,
-    language         varchar(255) not null,
     forks_count      int          not null,
+    `language`       varchar(100) not null,
     archived         tinyint(1)   not null,
     disabled         tinyint(1)   not null,
     visibility       varchar(255) not null
 )
     comment 'GitHub Repository';
 
-create table demo3.github_topic
+create table guthub_repo_topics
 (
-    id           int auto_increment
-        primary key,
-    topic        varchar(100)                       not null,
+    id           int auto_increment primary key,
+    repo_id      int                                not null,
+    topic_id     int                                not null,
+    topic_name   varchar(64)                        not null,
     created_time datetime default CURRENT_TIMESTAMP not null
 );
 
-create table demo3.github_user
+create table github_topic
 (
-    tb_id      int auto_increment
-        primary key,
-    id         int          not null comment 'github user id',
+    id           int auto_increment primary key,
+    topic        varchar(64)                        not null,
+    created_time datetime default CURRENT_TIMESTAMP not null
+);
+
+create table github_user
+(
+    id         int          not null auto_increment primary key,
     login      varchar(100) not null comment 'username',
+    avatar_url varchar(255) not null,
     url        varchar(255) not null,
     html_url   varchar(255) not null,
     repos_url  varchar(255) not null,
     type       varchar(20)  not null comment 'User Type',
     site_admin tinyint(1)   not null
 );
-
