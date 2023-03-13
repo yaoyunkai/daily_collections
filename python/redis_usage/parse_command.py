@@ -5,6 +5,8 @@
 Created at 2023/3/8
 """
 
+from hiredis import pack_command as hi_pack_command
+
 SYM_STAR = b'*'
 SYM_DOLLAR = b'$'
 SYM_CRLF = b'\r\n'
@@ -70,5 +72,14 @@ def pack_command(*args):
 
 
 if __name__ == '__main__':
-    print(pack_command('SET', 'name', 'tom'))
+    # print(pack_command('SET', 'name', 'tom'))
     print(pack_command('SET', 'name', '你好'))
+    print(hi_pack_command(('SET', 'name', '你好')))
+
+    import timeit
+
+    res1 = timeit.timeit("""pack_command('SET', 'name', '你好')""", number=1000000, globals=globals())
+    res2 = timeit.timeit("""hi_pack_command(('SET', 'name', '你好'))""", number=1000000, globals=globals())
+
+    print(res1)
+    print(res2)
