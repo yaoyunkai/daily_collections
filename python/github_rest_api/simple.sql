@@ -1,9 +1,9 @@
-create table demo3.github_repo
+create table github_repo
 (
     id               int          not null auto_increment primary key,
     `name`           varchar(100) not null comment 'repo name',
     full_name        varchar(100) not null,
-    private          tinyint(1)   not null,
+    private          tinyint(1)   not null, -- ture or false
     owner_id         int          not null comment 'this is a fk for github_user',
     html_url         varchar(255) not null,
     `description`    text         not null,
@@ -23,14 +23,14 @@ create table demo3.github_repo
     stargazers_count int          not null,
     watchers_count   int          not null,
     forks_count      int          not null,
-    `language`       varchar(100) not null,
+    `language`       varchar(100),
     archived         tinyint(1)   not null,
     disabled         tinyint(1)   not null,
     visibility       varchar(255) not null
 )
     comment 'GitHub Repository';
 
-create table guthub_repo_topics
+create table guthub_repo_topic_rel
 (
     id           int auto_increment primary key,
     repo_id      int                                not null,
@@ -55,5 +55,7 @@ create table github_user
     html_url   varchar(255) not null,
     repos_url  varchar(255) not null,
     type       varchar(20)  not null comment 'User Type',
-    site_admin tinyint(1)   not null
+    site_admin tinyint(1)   not null -- true or false
 );
+
+delete from guthub_repo_topic_rel where repo_id = %s
