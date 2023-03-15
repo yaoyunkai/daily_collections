@@ -10,6 +10,7 @@ https://github.com/rq/rq
 https://github.com/Textualize/rich
 https://github.com/secdev/scapy                      # 网络抓包
 https://github.com/marshmallow-code/marshmallow      # dataclass
+https://github.com/pydantic/pydantic
 https://github.com/giampaolo/psutil                  # 系统工具
 https://github.com/adamchainz/django-cors-headers
 https://github.com/Python-Markdown/markdown
