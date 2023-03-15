@@ -44,6 +44,44 @@ vid
 2. unique:
 sernum tst_id test_result
 
+3. 如何实现FP标志位的更新
+
+是否存在高并发下的问题
+
+-- 在插入新数据时，将 FP 标志位设置为 True
+CREATE TRIGGER `test_records_insert` BEFORE INSERT ON `test_records`
+FOR EACH ROW
+BEGIN
+  SET NEW.fp = TRUE;
+END;
+
+-- 在更新数据时，检查该 SN 在该工站出现的次数，如果超过一次，则将 FP 标志位设置为 False。
+CREATE TRIGGER `test_records_update` BEFORE UPDATE ON `test_records`
+FOR EACH ROW
+BEGIN
+  IF (
+    SELECT COUNT(*) FROM test_records
+    WHERE sn = NEW.sn AND workstation = NEW.workstation
+  ) > 1 THEN
+    SET NEW.fp = FALSE;
+  END IF;
+END;
+
+
+CREATE TRIGGER update_fp_flag
+BEFORE INSERT ON test_records
+FOR EACH ROW
+BEGIN
+    DECLARE fp_flag BOOLEAN;
+    SET fp_flag = (SELECT FP FROM test_records WHERE SN = NEW.SN AND Station = NEW.Station ORDER BY Timestamp DESC LIMIT 1);
+    IF fp_flag IS NULL OR fp_flag = FALSE THEN
+        SET NEW.FP = TRUE;
+    ELSE
+        SET NEW.FP = FALSE;
+    END IF;
+END;
+
+From ChatGPT
 
 """
 
