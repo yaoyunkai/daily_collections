@@ -56,6 +56,38 @@ secrets.compare_digest(force_bytes(val1), force_bytes(val2))
 
 取出password_hash中的salt和iterations和我们传入的passwd，得出一个password_hash, 然后和之前的passwd_hash相比是不是完全相等。
 
+```python
+import base64
+import hashlib
+
+
+def test1():
+    ret = hashlib.pbkdf2_hmac('sha256', b'abcdef123456', b'UmSEU7e5ecmD0KPa7t4Zzj', 260000)
+    ret = base64.b64encode(ret).decode('ascii').strip()
+    print(ret)
+
+
+def test2(iterations=260000):
+    passwd = b'abcdef123456'
+    salt = b'UmSEU7e5ecmD0KPa7t4Zzj'
+
+    init = passwd + salt
+    h0 = hashlib.sha256(init).digest()
+
+    for i in range(iterations - 1):
+        h0 = h0 + init
+        h0 = hashlib.sha256(h0).digest()
+
+    ret = base64.b64encode(h0).decode('ascii').strip()
+    print(ret)
+
+
+if __name__ == '__main__':
+    test2()
+    test2()
+
+```
+
 ----
 
 基于内容的短路行为是一种用于防止时间分析攻击的技术。时间分析攻击是一种基于密码系统的运行时间或者响应时间的差异来推断密码信息的攻击方法。
