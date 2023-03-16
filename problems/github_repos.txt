@@ -1,7 +1,9 @@
+# C
 https://github.com/huangz1990/redis-3.0-annotated
 https://github.com/unbit/uwsgi
 https://github.com/0xAX/linux-insides
 https://github.com/dibingfa/flash-linux0.11-talk
+https://github.com/reactos/reactos
 
 # 食谱
 https://github.com/TandoorRecipes/recipes
