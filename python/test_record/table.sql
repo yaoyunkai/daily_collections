@@ -25,49 +25,58 @@ CREATE TABLE `test_record`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci COMMENT ='Test Record';
 
-
 /*
-search test record
+将first_pass 用视图保存起来。
+
 
 */
-select record_time,
-       sernum,
-       uuttype,
+CREATE VIEW first_pass_record AS
+SELECT t1.*
+FROM test_record t1
+         INNER JOIN
+     (SELECT MIN(record_time) AS earliest_time,
+             sernum,
+             area
+      FROM test_record
+      GROUP BY sernum, area) t2 ON t1.record_time = t2.earliest_time
+         AND t1.sernum = t2.sernum
+         AND t1.area = t2.area;
+
+
+select uuttype,
        area,
-       test_result,
-       run_time,
-       test_failure,
-       test_server,
-       test_container
-from test_record
-where record_time between '2021-10-01 00:00:00' and '2021-10-01 23:59:59'
-  and (area = 'ASSY' or area like 'PCB%')
-  and (uuttype = 'IE%')
-
-order by record_time;
-
-/*
- compute first pass yield
-
- */
-select t1.uuttype,
-       t1.area,
-       sum(IF(t1.test_result = 'P', 1, 0))         as 'pass_count',
-       sum(IF(t1.test_result = 'F', 1, 0))         as 'fail_count',
-       sum(IF(t1.test_result in ('P', 'F'), 1, 0)) as 'total_count'
-from test_record t1
-         inner join (select min(record_time) as record_time, sernum, area
-                     from test_record
-                     group by area, sernum) t2
-                    on t1.area = t2.area and t1.sernum = t2.sernum and t1.record_time = t2.record_time
-group by t1.uuttype, t1.area;
+       sum(IF(test_result = 'P', 1, 0))         as 'pass_count',
+       sum(IF(test_result = 'F', 1, 0))         as 'pass_count',
+       sum(IF(test_result in ('P', 'F'), 1, 0)) as 'total_count'
+from first_pass_record
+group by uuttype, area;
 
 
-select t1.record_time, t1.sernum, t1.uuttype, t1.area, t1.test_result
-from test_record t1
-         inner join (select min(record_time) as record_time, sernum, area
-                     from test_record
-                     where uuttype = 'IE-3400-8T2S-A'
-                     group by area, sernum) t2
-                    on t1.area = t2.area and t1.sernum = t2.sernum and t1.record_time = t2.record_time
-order by record_time
+SELECT distinct sernum
+FROM first_pass_record t1
+where exists(select * from first_pass_record t2 where t1.sernum = t2.sernum and t2.test_result = 'F');
+
+SELECT uuttype, count(distinct sernum) as 'pass_count'
+FROM first_pass_record t1
+where not exists(select * from first_pass_record t2 where t1.sernum = t2.sernum and t2.test_result = 'F')
+group by uuttype;
+
+
+SELECT uuttype,
+       COUNT(DISTINCT sernum) AS total_count,
+       SUM(CASE WHEN all_pass = 1 THEN 1 ELSE 0 END) AS pass_count,
+       SUM(CASE WHEN only_one_fail = 1 THEN 1 ELSE 0 END) AS fail_count
+FROM (
+  SELECT sernum, uuttype,
+         MAX(CASE WHEN area = 'PCBFT' AND test_result = 'P' THEN 1 ELSE 0 END) AS ft_pass,
+         MAX(CASE WHEN area = 'PCB2C' AND test_result = 'P' THEN 1 ELSE 0 END) AS c_pass,
+         MAX(CASE WHEN area = 'PCBST' AND test_result = 'P' THEN 1 ELSE 0 END) AS st_pass,
+         MAX(CASE WHEN area = 'PCBFT' AND test_result = 'F' THEN 1 ELSE 0 END) AS ft_fail,
+         MAX(CASE WHEN area = 'PCB2C' AND test_result = 'F' THEN 1 ELSE 0 END) AS c_fail,
+         MAX(CASE WHEN area = 'PCBST' AND test_result = 'F' THEN 1 ELSE 0 END) AS st_fail,
+         IF(ft_fail + c_fail + st_fail = 1 AND ft_pass + c_pass + st_pass = 0, 1, 0) AS only_one_fail,
+         IF(ft_fail + c_fail + st_fail = 0 AND ft_pass + c_pass + st_pass = 3, 1, 0) AS all_pass
+  FROM demo3.first_pass_record
+  GROUP BY sernum, uuttype
+) AS uut_summary
+GROUP BY uuttype;
