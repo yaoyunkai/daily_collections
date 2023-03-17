@@ -4,6 +4,8 @@
 
 Create at 2023/3/16 22:50
 """
+import contextlib
+import math
 import time
 import uuid
 from datetime import datetime
@@ -54,24 +56,78 @@ def update_stats(conn: redis.Redis, context, types, value, timeout=5):
             continue
 
 
+def _get_stddev(sumsq, sum_var, count):
+    # 标准差 = sqrt [ (样本平方和 - (样本总和)^2 / 样本个数) / (样本个数 - 1) ]
+    variance = (sumsq - (sum_var ** 2) / count) / (count - 1)
+    return math.sqrt(variance)
+
+
 def get_stats(conn: redis.Redis, context, types):
     destination = 'stats:{}:{}'.format(context, types)
 
-    # TODO key is bytes and value is bytes
-    data = conn.zrange(destination, 0, -1, withscores=True)
+    _result = {}
 
-    data[b'average'] = data[b'sum'] / data[b'count']
-    numerator = data[b'sumsq'] - ((data[b'sum'] ** 2) / data[b'count'])
-    data[b'stddev'] = (numerator / (data[b'count'] - 1 or 1)) ** .5
-    return data
+    # return a list of tuple, k is bytes , v is float
+    data = conn.zrange(destination, 0, -1, withscores=True)
+    if not data:
+        return _result
+
+    for _k, _v in data:
+        _result[_k.decode('utf8')] = _v
+
+    _result['average'] = _result['sum'] / _result['count']
+    if _result['count'] < 1.0:
+        return _result
+
+    _result['stddev'] = _get_stddev(_result['sumsq'], _result['sum'], _result['count'])
+    return _result
+
+
+@contextlib.contextmanager
+def access_time(conn: redis.Redis, context):
+    start = time.time()
+    yield
+
+    delta = time.time() - start
+    stats = update_stats(conn, context, 'accessTime', delta)
+    average = stats[1] / stats[0]
+
+    pipe = conn.pipeline(True)
+    pipe.zadd('slowest:accessTime', {context: average})
+    pipe.zremrangebyrank('slowest:accessTime', 0, -101)
+    pipe.execute()
+
+
+def process_view_hello_world(request):
+    conn = redis.Redis()  # or get a conn pool
+
+    with access_time(conn, 'view_hello_world'):
+        print('do request and get result, request path: {}'.format(request))
+        time.sleep(0.04)
+        resp = '200 ok'
+
+    return resp
 
 
 if __name__ == '__main__':
-    rd = redis.Redis()
+    rd = redis.Redis(encoding='utf8')
 
     # values = [6.7, 6, 7.8, 5.6, 7, 5.8, 7.6, 9, 6.9, 6.8]
     # for val in values:
     #     update_stats(rd, 'UserInfo', 'accessTime', val)
 
-    ret = get_stats(rd, 'UserInfo', 'accessTime')
-    print(ret)
+    # values = [9.835, 9.244, 7.567, 6.289, 5.184, 7.003, 5.701, 9.479, 9.786, 5.923,
+    #           7.242, 8.097, 9.184, 5.981, 9.301, 6.928, 7.216, 8.569, 6.305, 6.995,
+    #           9.846, 7.857, 6.799, 8.835, 7.001, 9.137, 6.982, 6.122, 6.985, 7.246,
+    #           6.106, 6.144, 7.756, 9.123, 6.789, 6.911, 8.712, 7.229, 9.025, 8.926,
+    #           5.888, 7.796, 8.094, 7.006, 5.824, 9.755, 5.104, 5.392, 5.254, 7.783,
+    #           9.369, 5.684, 5.129, 6.538, 5.612]
+
+    # # for val in values:
+    # ret1 = update_stats(rd, 'Demo', 'accessTime', )
+    # print(ret1)
+
+    process_view_hello_world('hhhh')
+
+    # ret = get_stats(rd, 'Demo', 'accessTime')
+    # print(ret)
