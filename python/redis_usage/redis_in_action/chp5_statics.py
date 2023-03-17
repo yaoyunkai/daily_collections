@@ -94,6 +94,7 @@ def access_time(conn: redis.Redis, context):
 
     pipe = conn.pipeline(True)
     pipe.zadd('slowest:accessTime', {context: average})
+    # 保留一百个最慢的context
     pipe.zremrangebyrank('slowest:accessTime', 0, -101)
     pipe.execute()
 
@@ -103,7 +104,7 @@ def process_view_hello_world(request):
 
     with access_time(conn, 'view_hello_world'):
         print('do request and get result, request path: {}'.format(request))
-        time.sleep(0.04)
+        # time.sleep(0.04)
         resp = '200 ok'
 
     return resp
