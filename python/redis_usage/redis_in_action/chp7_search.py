@@ -32,8 +32,9 @@ Create at 2023/3/21 21:16
 import re
 import uuid
 
-import faker
 import redis
+
+from generate_document import generate_docs, tokenize as tk
 
 STOP_WORDS = set('''able about across after all almost also am among
 an and any are as at be because been but by can cannot could dear did
@@ -57,8 +58,8 @@ def tokenize(content):
     return words - STOP_WORDS
 
 
-def index_document(conn, document_id, content):
-    words = tokenize(content)
+def index_document(conn, document_id, content, func=tokenize):
+    words = func(content)
 
     pipeline = conn.pipeline(True)
     for word in words:
@@ -173,7 +174,7 @@ title: xxxx
 def search_and_sort(conn, query, uid=None, ttl=300, sort="-updated", start=0, num=20):
     desc = sort.startswith('-')
     sort = sort.lstrip('-')
-    by = "kb:doc:*->" + sort  # kb:doc<doc_id>
+    by = "doc:*->" + sort  # doc:<id>
     alpha = sort not in ('updated', 'id', 'created')
 
     if uid and not conn.expire(uid, ttl):
@@ -184,32 +185,96 @@ def search_and_sort(conn, query, uid=None, ttl=300, sort="-updated", start=0, nu
 
     pipeline = conn.pipeline(True)
     pipeline.scard('idx:' + uid)  # doc id numbers
-    # TODO sort的用法
     pipeline.sort('idx:' + uid, by=by, alpha=alpha, desc=desc, start=start, num=num)
     results = pipeline.execute()
     return results[0], results[1], uid
 
 
-def create_document(conn: redis.Redis, doc_id, created, title, content):
-    pipe = conn.pipeline(True)
+def save_dummy(conn: redis.Redis, numbers=50):
+    data_list = generate_docs(numbers)
 
-    _dict = {
-        'id': doc_id,
-        'created': created,  # ts
-        'updated': created,
-        'title': title,
-    }
+    for item in data_list:
+        content = item.pop('content')
+        doc_id = item['id']
+        doc_id = 'doc:{}'.format(doc_id)  # doc_id should equal document key
+        index_document(conn, doc_id, content, func=tk)
+        conn.hset(doc_id, mapping=item)
 
-    pipe.hset('kb:doc{}'.format(doc_id), mapping=_dict)
-    pipe.execute()
-    index_document(conn, 'kb:doc{}'.format(doc_id), content)
+
+# =========================================================================
+
+def search_and_zsort(conn: redis.Redis, query, uid=None, ttl=300, update=1, vote=0,
+                     start=0, num=20, desc=True):
+    if uid and not conn.expire(uid, ttl):
+        uid = None
+
+    if not uid:
+        uid = parse_and_search(conn, query, ttl=ttl)
+
+        scored_search = {
+            uid: 0,
+            'sort:update': update,
+            'sort:votes': vote
+        }
+        # for set related, SUM is default aggregate
+        uid = zintersect(conn, scored_search, ttl)
+
+    pipeline = conn.pipeline(True)
+    pipeline.zcard('idx:' + uid)
+    if desc:
+        pipeline.zrevrange('idx:' + uid, start, start + num - 1)
+    else:
+        pipeline.zrange('idx:' + uid, start, start + num - 1)
+    results = pipeline.execute()
+
+    return results[0], results[1], uid
+
+
+def _zset_common(conn, method, scores, ttl=30, **kw):
+    uid = str(uuid.uuid4())
+    execute = kw.pop('_execute', True)
+    pipeline = conn.pipeline(True) if execute else conn
+    for key in list(scores.keys()):
+        scores['idx:' + key] = scores.pop(key)
+    getattr(pipeline, method)('idx:' + uid, scores, **kw)
+    pipeline.expire('idx:' + uid, ttl)
+    if execute:
+        pipeline.execute()
+    return uid
+
+
+def zintersect(conn, items, ttl=30, **kw):
+    return _zset_common(conn, 'zinterstore', dict(items), ttl, **kw)
+
+
+def zunion(conn, items, ttl=30, **kw):
+    return _zset_common(conn, 'zunionstore', dict(items), ttl, **kw)
+
+
+def string_to_score(string, ignore_case=False):
+    """
+    将字符串转换为分值
+
+    """
+    if ignore_case:
+        string = string.lower()
+
+    pieces = list(map(ord, string[:6]))
+    while len(pieces) < 6:
+        pieces.append(-1)
+
+    score = 0
+    for piece in pieces:
+        score = score * 257 + piece + 1
+
+    return score * 2 + (len(string) > 6)
 
 
 if __name__ == '__main__':
     rd = redis.Redis(encoding='utf8')
-    fk = faker.Faker()
 
-    # index_document(rd, 'kb:doc0034', demo1_content)
+    # save_dummy(rd)
+    # ret = search_and_sort(rd, 'relationship +pm')
+    # print(ret)
 
-    ret = search_and_sort(rd, 'sam +now +play')
-    print(ret)
+    # print(string_to_score('sdfasfd'))
