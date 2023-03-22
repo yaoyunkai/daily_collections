@@ -17,3 +17,11 @@ https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html
 [Command key specifications](https://redis.io/docs/reference/key-specs/)
 
 [Redis command arguments](https://redis.io/docs/reference/command-arguments/)
+
+
+https://github.com/josiahcarlson/rom
+
+https://github.com/josiahcarlson/rpqueue
+
+https://github.com/hajimes/mmh3
+
