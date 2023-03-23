@@ -25,13 +25,13 @@ Zset: profile:<uid>      存储用户发布的状态信息:    status_id : creat
 
 Create at 2023/3/22 21:34
 """
+
 import math
 import pprint
 import random
 import threading
 import time
 import uuid
-from typing import Any
 
 import faker
 import redis
@@ -99,7 +99,7 @@ def create_user(conn, login, name):
         release_lock(conn, 'user:' + username, lock)
         return None
 
-    uid = conn.incr('user:id:')
+    uid = conn.incr('user:id:')  # uid is int
     pipeline = conn.pipeline(True)
     pipeline.hset('users:', username, uid)
     pipeline.hset('user:%s' % uid, mapping={
@@ -121,18 +121,15 @@ def create_status(conn: redis.Redis, uid, message, **data):
     创建一个状态
 
     :param conn:
-    :param uid: must be str or int
+    :param uid: must be int or str
     :param message:
     :param data:
     :return: value is int
     """
-    # uid = to_str(uid)
     pipeline = conn.pipeline(True)
     pipeline.hget('user:%s' % uid, 'login')
     pipeline.incr('status:id:')
     login, status_id = pipeline.execute()
-
-    # print('the status id is:{}, type is: {}'.format(status_id, type(status_id)))
 
     if not login:
         return None
@@ -155,13 +152,12 @@ def get_status_messages(conn, uid, timeline='home:', page=1, count=30):
     获取status 从 homeline
 
     :param conn:
-    :param uid:
+    :param uid: must be str or int
     :param timeline:
     :param page:
     :param count:
     :return:
     """
-    uid = to_str(uid)
     statuses = conn.zrevrange('%s%s' % (timeline, uid), (page - 1) * count, page * count - 1)
 
     pipeline = conn.pipeline(True)
@@ -172,8 +168,14 @@ def get_status_messages(conn, uid, timeline='home:', page=1, count=30):
 
 
 def follow_user(conn: redis.Redis, uid, other_uid):
-    uid = to_str(uid)
-    other_uid = to_str(other_uid)
+    """
+    the uid and other_uid should be string
+
+    :param conn:
+    :param uid:
+    :param other_uid:
+    :return:
+    """
 
     fkey1 = 'following:%s' % uid
     fkey2 = 'followers:%s' % other_uid
@@ -208,8 +210,6 @@ def unfollow_user(conn, uid, other_uid):
     从自己的home line 里面移除 posts
 
     """
-    uid = to_str(uid)
-    other_uid = to_str(other_uid)
 
     fkey1 = 'following:%s' % uid
     fkey2 = 'followers:%s' % other_uid
@@ -218,7 +218,7 @@ def unfollow_user(conn, uid, other_uid):
         return None
 
     pipeline = conn.pipeline(True)
-    pipeline.zrem(fkey1, other_uid)
+    pipeline.zrem(fkey1, other_uid)  # return is int
     pipeline.zrem(fkey2, uid)
     pipeline.zrevrange('profile:%s' % other_uid, 0, HOME_TIMELINE_SIZE - 1)
     following, followers, statuses = pipeline.execute()[-3:]
@@ -247,7 +247,14 @@ def execute_later(conn, queue, name, args):
 
 
 def post_status(conn: redis.Redis, user_id, message, **data):
-    user_id = to_str(user_id)
+    """
+
+    :param conn:
+    :param user_id: must be str
+    :param message:
+    :param data:
+    :return:
+    """
     status_id = create_status(conn, user_id, message, **data)
     if not status_id:
         return None
@@ -267,7 +274,6 @@ def post_status(conn: redis.Redis, user_id, message, **data):
 def syndicate_status(conn: redis.Redis, uid, post, start=0):
     # 获取关注者列表  (bytes, float)
     followers = conn.zrangebyscore('followers:%s' % uid, start, 'inf', start=0, num=POSTS_PER_PASS, withscores=True)
-    print('followers list is : {}'.format(followers))
 
     pipeline = conn.pipeline(False)
     for follower, start in followers:  # start 是分值，for 完成之后，会被更新为 最后的分值
@@ -280,30 +286,23 @@ def syndicate_status(conn: redis.Redis, uid, post, start=0):
     pipeline.execute()
 
     if len(followers) >= POSTS_PER_PASS:
-        execute_later(conn, 'default', 'syndicate_status', [conn, uid, post, start])
+        execute_later(conn, 'default', syndicate_status.__name__, [conn, uid, post, start])
 
 
-def delete_status(conn: redis.Redis, uid: Any, status_id):
+def delete_status(conn: redis.Redis, uid, status_id):
     """
     uid should be str
 
     """
-    status_id = to_str(status_id)
     key = 'status:%s' % status_id
     lock = acquire_lock_with_timeout(conn, key, 1)
     if not lock:
         return None
 
-    if type(uid) is not str:
-        _uid = str(uid)
-    else:
-        _uid = uid
-
-    if conn.hget(key, 'uid') != to_bytes(_uid):  # how to support int uid
+    if conn.hget(key, 'uid') != to_bytes(uid):  # how to support int uid
         release_lock(conn, key, lock)
         return None
 
-    uid = to_str(uid)
     pipeline = conn.pipeline(True)
     pipeline.delete(key)
     pipeline.zrem('profile:%s' % uid, status_id)
@@ -319,9 +318,6 @@ def delete_status(conn: redis.Redis, uid: Any, status_id):
 
 
 def clean_timelines(conn, uid, status_id, start=0, on_lists=False):
-    uid = to_str(uid)
-    status_id = to_str(status_id)
-
     if on_lists:
         key = 'list:out:%s' % uid
         base = 'list:statuses:%s'
@@ -346,7 +342,7 @@ def clean_timelines(conn, uid, status_id, start=0, on_lists=False):
 
 # -----------------------------------------------------------------------------
 
-def create_dummy_user(numbers=1000):
+def create_dummy_user(numbers=50):
     conn = redis.Redis(db=0)
     _fake = faker.Faker()
 
@@ -364,21 +360,20 @@ def create_dummy_user(numbers=1000):
 
 def create_dummy_relationship():
     conn = redis.Redis(db=0)
-    key = 'users:'
 
-    _all_users = conn.hgetall(key)
+    _all_users = conn.hgetall('users:')
     all_users = {}
     for k, v in _all_users.items():
         all_users[to_str(k)] = to_str(v)
+    uid_arr = list(all_users.values())
 
-    for i in range(3):
-        uid_arr = list(all_users.values())
+    for i in range(10):
+        uid = random.choice(uid_arr)
         random.shuffle(uid_arr)
-        point = int(len(uid_arr) * 0.4)
+        to_flow_arr = uid_arr[:30]
 
-        for uid in uid_arr[:point]:
-            for uid2 in uid_arr[point:]:
-                follow_user(conn, uid, uid2)
+        for to_flow in to_flow_arr:
+            follow_user(conn, uid, to_flow)
 
 
 def post_dummy_posts(numbers=3000):
@@ -397,5 +392,10 @@ def post_dummy_posts(numbers=3000):
 
 if __name__ == '__main__':
     rd = redis.Redis()
-    ret = get_status_messages(rd, '11', count=20)
+
+    ret = get_status_messages(rd, '20', count=100)
     pprint.pprint(ret)
+
+    # create_dummy_user(100)
+    # create_dummy_relationship()
+    # post_dummy_posts()
