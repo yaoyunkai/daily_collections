@@ -411,12 +411,21 @@ def post_dummy_posts(numbers=3000):
 # -----------------------------------------------------------------------------
 
 """
-流API需要对外公开哪些事件
-是否需要进行访问限制
-流API应该提供哪些过滤选项
+- 流API需要对外公开哪些事件
+- 是否需要进行访问限制
+- 流API应该提供哪些过滤选项
 
-只要使用chunked传输编码，就可以使用HTTP服务器生成并发送增量式数据
-todo: 什么是流式HTTP
+Transfer-Encoding: chunked
+分块编码主要应用于如下场景，即要传输大量的数据，但是在请求在没有被处理完之前响应的长度是无法获得的
+
+    7\r\n
+    Mozilla\r\n
+    9\r\n
+    Developer\r\n
+    7\r\n
+    Network\r\n
+    0\r\n
+    \r\n
 
 
 """
@@ -526,17 +535,18 @@ def process_filters(handler):
         args = handler.query
 
     handler.send_response(200)
+    # handler.send_header('Content-Type', 'text/plain')
     handler.send_header('Transfer-Encoding', 'chunked')
     handler.end_headers()
 
     is_quit = [False]
     for item in filter_content(redis.Redis(), ident, method, name, args, is_quit):
         try:
-            handler.wfile.write('%X\r\n%s\r\n' % (len(item), item))
+            handler.wfile.write(b'%X\r\n%s\r\n' % (len(item), item))
         except socket.error:
             is_quit[0] = True
     if not is_quit[0]:
-        handler.wfile.write('0\r\n\r\n')
+        handler.wfile.write(b'0\r\n\r\n')
 
 
 def filter_content(conn, ident, method, name, args, is_quit):
@@ -566,13 +576,16 @@ def filter_content(conn, ident, method, name, args, is_quit):
             continue
 
         message = item['data']
-        decoded = json.loads(message)
+        print(message)
+        yield message
 
-        if match(decoded):
-            if decoded.get('deleted'):
-                yield json.dumps({'id': decoded['id'], 'deleted': True})
-            else:
-                yield message
+        # decoded = json.loads(message)
+        #
+        # if match(decoded):
+        #     if decoded.get('deleted'):
+        #         yield json.dumps({'id': decoded['id'], 'deleted': True})
+        #     else:
+        #         yield message
 
         if is_quit[0]:
             break
@@ -583,75 +596,31 @@ def filter_content(conn, ident, method, name, args, is_quit):
 def create_filters(ident, method, name, args):
     if method == 'sample':
         return SampleFilter(ident, args)
-    elif name == 'track':
-        return TrackFilter(args)
-    elif name == 'follow':
-        return FollowFilter(args)
-    elif name == 'location':
-        return LocationFilter(args)
+    # elif name == 'track':
+    #     return TrackFilter(args)
+    # elif name == 'follow':
+    #     return FollowFilter(args)
+    # elif name == 'location':
+    #     return LocationFilter(args)
     raise Exception("Unknown filter")
 
 
-def SampleFilter(id, args):  # A
+class BaseFilter(object):
+
+    def check(self, args):
+        pass
+
+
+def SampleFilter(ident, args):  # A
     percent = int(args.get('percent', ['10'])[0], 10)  # B
     ids = list(range(100))  # C
-    shuffler = random.Random(id)  # C
+    shuffler = random.Random(ident)  # C
     shuffler.shuffle(ids)  # C
     keep = set(ids[:max(percent, 1)])  # D
 
     def check(status):  # E
-        return (status['id'] % 100) in keep  # F
-
-    return check
-
-
-def TrackFilter(list_of_strings):
-    groups = []  # A
-    for group in list_of_strings:  # A
-        group = set(group.lower().split())  # A
-        if group:
-            groups.append(group)  # B
-
-    def check(status):
-        message_words = set(status['message'].lower().split())  # C
-        for group in groups:  # D
-            if len(group & message_words) == len(group):  # E
-                return True  # E
-        return False
-
-    return check
-
-
-def FollowFilter(names):
-    nset = set()  # A
-    for name in names:  # B
-        nset.add('@' + name.lower().lstrip('@'))  # B
-
-    def check(status):
-        message_words = set(status['message'].lower().split())  # C
-        message_words.add('@' + status['login'].lower())  # C
-
-        return message_words & nset  # D
-
-    return check
-
-
-def LocationFilter(list_of_boxes):
-    boxes = []  # A
-    for start in range(0, len(list_of_boxes) - 3, 4):  # A
-        boxes.append(list(map(float, list_of_boxes[start:start + 4])))  # A
-
-    def check(self, status):
-        location = status.get('location')  # B
-        if not location:  # C
-            return False  # C
-
-        lat, lon = list(map(float, location.split(',')))  # D
-        for box in self.boxes:  # E
-            if (box[1] <= lat <= box[3] and  # F
-                    box[0] <= lon <= box[2]):  # F
-                return True  # F
-        return False
+        # return (int(status['id']) % 100) in keep  # F
+        return True
 
     return check
 
@@ -664,10 +633,3 @@ def start_server():
 
 if __name__ == '__main__':
     rd = redis.Redis()
-
-    # ret = get_status_messages(rd, '20', page=6, count=100)
-    # pprint.pprint(ret)
-
-    # start_server()
-
-    post_status(rd, '34', 'this is a text')

@@ -25,3 +25,9 @@ https://pegasuswang.github.io/booknotes/
 https://staruml.io/
 
 UML软件
+
+------------
+
+HTTP协议: https://httpwg.org/specs/rfc9112.html#field.transfer-encoding
+
+Transfer-Encoding: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Transfer-Encoding
