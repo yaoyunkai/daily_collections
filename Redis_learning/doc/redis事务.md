@@ -58,7 +58,7 @@ EXEC
 
 python客户端使用 `pipeline`来实现事务。
 
-[code demo](./chapter3_code.py)
+[code demo](../redis_in_action/chapter3_code.py)
 
 ## redis事务
 
