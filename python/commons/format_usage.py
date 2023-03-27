@@ -9,15 +9,5 @@ hex
 
 
 
-Create at 2023/3/26 22:37
+Created at 2023/3/27
 """
-
-x = 1234.567890
-
-print(format(x, '0.2f'))
-print(format(x, '>10.1f'))
-print(format(x, '<10.1f'))
-print(format(x, '^10.1f'))
-
-print(format(x, 'e'))
-print(format(x, '0.2E'))

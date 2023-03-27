@@ -1,18 +1,21 @@
 """
-Deque
-    maxlen: 最大长度
+Collections
 
+deque
+
+
+
+Created at 2023/3/27
 """
-
 from collections import deque
 
 
 def search(lines, pattern, history=5):
     previous_lines = deque(maxlen=history)
-    for line in lines:
-        if pattern in line:
-            yield line, previous_lines
-        previous_lines.append(line)
+    for _line in lines:
+        if pattern in _line:
+            yield _line, previous_lines
+        previous_lines.append(_line)
 
 
 # Example use on a file
