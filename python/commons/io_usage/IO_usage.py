@@ -36,6 +36,11 @@ readline:    从流中读取并返回一行。如果指定了 size，将至多�
 truncate     将流的大小调整为给定的 size 个字节（如果未指定 size 则调整至当前位置）。
 
 
+Open Mode:
+
+X: 不存在才写入
+
+
 Created at 2023/3/8
 """
 
