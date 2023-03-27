@@ -21,3 +21,20 @@ def timethis(func):
         return result
 
     return wrapper
+
+
+class TimeThis:
+    """
+    Decorator that reports the execution time.
+    """
+
+    def __init__(self, func):
+        self.func = func
+        wraps(func)(self)
+
+    def __call__(self, *args, **kwargs):
+        start = time.time()
+        result = self.func(*args, **kwargs)
+        end = time.time()
+        print(self.func.__name__, end - start)
+        return result
