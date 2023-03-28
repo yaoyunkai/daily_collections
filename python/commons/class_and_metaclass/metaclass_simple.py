@@ -8,7 +8,7 @@ metaclass
     __init__: name, bases, attrs, **kwargs
 
 在类实例化时会调用:
-    __call__:
+    __call__: cls: 基类对象, 和 __init__ 中的参数
 
 
 __init_subclass__:
@@ -17,6 +17,7 @@ __init_subclass__:
 
 Create at 2023/3/27 21:52
 """
+import threading
 
 
 def print_object(self, ):
@@ -36,7 +37,7 @@ class Foo(type):
         # super().__init__()
         print('call __init__')
         # print(cls, name, bases, attrs, kwargs)
-        cls.__str__ = print_object
+        # cls.__str__ = print_object
 
         super().__init__(name, bases, attrs)
 
@@ -61,11 +62,39 @@ class Foo(type):
 
     def __call__(cls, *args, **kwargs):
         print('call __call__')
-        return super().__call__()
+        print(cls, args, kwargs)
+        return super().__call__(*args, **kwargs)
 
 
 class Bar(object, metaclass=Foo, demo=1234):
     name = 12345
+
+    def __init__(self, name, age, **kwargs):
+        pass
+
+
+class SingletonMeta(type):
+    _instances = None
+    _lock = threading.RLock()
+
+    def __call__(cls, *args, **kwargs):
+        with SingletonMeta._lock:
+            if SingletonMeta._instances is None:
+                SingletonMeta._instances = {}
+
+            if cls not in SingletonMeta._instances:
+                instance = super().__call__(*args, **kwargs)
+                SingletonMeta._instances[cls] = instance
+        return SingletonMeta._instances[cls]
+
+
+class Parent:
+    _lock = None
+    pass
+
+
+class Singleton(Parent, metaclass=SingletonMeta):
+    pass
 
 
 class Philosopher:
@@ -85,4 +114,11 @@ if __name__ == '__main__':
     # print(bar)
     # print(vars(Bar))
 
-    d2 = AustralianPhilosopher()
+    bar = Bar(123, 213, ab=12344, ac=123444)
+
+    s1 = Singleton()
+    s2 = Singleton()
+    s3 = Singleton()
+    s4 = Singleton()
+
+    print(s1 == s3)
