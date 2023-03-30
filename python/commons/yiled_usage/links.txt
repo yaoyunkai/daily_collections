@@ -1,6 +1,11 @@
 http://www.dabeaz.com/coroutines/
 http://www.dabeaz.com/generators/
 
-https://peps.python.org/pep-0380/
-https://peps.python.org/pep-0342/
 https://peps.python.org/pep-3156/
+
+https://peps.python.org/pep-0255/    基本的generator用法
+https://peps.python.org/pep-0342/    协程相关的用法 send throw close 等
+https://peps.python.org/pep-0288/    throw a Error
+https://peps.python.org/pep-0325/    close
+
+https://peps.python.org/pep-0380/    yield from usage
