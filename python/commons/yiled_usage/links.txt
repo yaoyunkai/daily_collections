@@ -9,3 +9,13 @@ https://peps.python.org/pep-0288/    throw a Error
 https://peps.python.org/pep-0325/    close
 
 https://peps.python.org/pep-0380/    yield from usage
+
+
+https://effectivepython.com/2015/03/10/consider-coroutines-to-run-many-functions-concurrently
+
+https://zh.wikipedia.org/wiki/%E5%BA%B7%E5%A8%81%E7%94%9F%E5%91%BD%E6%B8%B8%E6%88%8F
+
+https://www.csse.canterbury.ac.nz/greg.ewing/python/yield-from/yield_from.html
+
+https://github.com/bslatkin/effectivepython/blob/master/example_code/item_40.py
+

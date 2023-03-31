@@ -241,6 +241,29 @@ def update_repo_topics(conn, repo_id, topics: list):
         conn.rollback()
 
 
+def unstar_repos():
+    """
+    curl -L \
+      -X DELETE \
+      -H "Accept: application/vnd.github+json" \
+      -H "Authorization: Bearer <YOUR-TOKEN>"\
+      -H "X-GitHub-Api-Version: 2022-11-28" \
+      https://api.github.com/repos/OWNER/REPO/subscription
+
+    """
+    headers = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer {}'.format(passwd),
+        'X-GitHub-Api-Version': '2022-11-28'
+    }
+
+    resp = requests.delete('https://api.github.com/repos/{owner}/{repo}/subscription'.format(
+        owner='', repo=''
+    ), headers=headers)
+    print(resp.status_code)
+
+
 if __name__ == '__main__':
     # get_mysql_conn()
-    get_stars_api()
+    # get_stars_api()
+    unstar_repos()
