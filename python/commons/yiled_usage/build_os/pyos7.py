@@ -1,14 +1,18 @@
 """
-file: pyos6.py
-Created by Libyao at 2023/4/5
 
-More System Call:
-    WaitTask
+add IO loop support
+
+select timeout:
+1. 不存在 None : 永远不会超时
+2. 0          : 没有信号就返回
 
 
 
+Created at 2023/4/6
 """
 from queue import Queue
+
+import select
 
 
 class Task(object):
@@ -30,6 +34,10 @@ class Scheduler(object):
         self.taskmap = {}
 
         self.exit_waiting = {}
+
+        # I/O waiting
+        self.read_waiting = {}
+        self.write_waiting = {}
 
     def new(self, target):
         """
@@ -65,10 +73,34 @@ class Scheduler(object):
         else:
             return False
 
+    def waitforread(self, task, fd):
+        self.read_waiting[fd] = task
+
+    def waitforwrite(self, task, fd):
+        self.write_waiting[fd] = task
+
+    def iopoll(self, timeout):
+        if self.read_waiting or self.write_waiting:
+            r, w, e = select.select(self.read_waiting, self.write_waiting, [], timeout)
+
+            for fd in r:
+                self.schedule(self.read_waiting.pop(fd))
+            for fd in w:
+                self.schedule(self.write_waiting.pop(fd))
+
+    def iotask(self):
+        while True:
+            if self.ready.empty():
+                self.iopoll(None)
+            else:
+                self.iopoll(0)
+            yield
+
     def schedule(self, task):
         self.ready.put(task)
 
     def mainloop(self):
+        self.new(self.iotask())
         while self.taskmap:
             task = self.ready.get()
             try:
@@ -132,6 +164,24 @@ class WaitTask(SystemCall):
         self.task.sendval = result
         if not result:
             self.sched.schedule(self.task)
+
+
+class ReadWait(SystemCall):
+    def __init__(self, f):
+        self.f = f
+
+    def handle(self):
+        fd = self.f.fileno()
+        self.sched.waitforread(self.task, fd)
+
+
+class WriteWait(SystemCall):
+    def __init__(self, f):
+        self.f = f
+
+    def handle(self):
+        fd = self.f.fileno()
+        self.sched.waitforwrite(self.task, fd)
 
 
 if __name__ == '__main__':
