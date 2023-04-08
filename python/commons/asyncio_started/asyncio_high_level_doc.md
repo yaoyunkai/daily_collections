@@ -119,3 +119,34 @@ asyncio.run(main())
 
 ### 创建任务
 
+```python
+async def coro():
+    pass
+
+
+# In Python 3.7+
+task1 = asyncio.create_task(coro())
+
+# This works in all Python versions but is less readable
+task2 = asyncio.ensure_future(coro())
+
+```
+
+### 休眠
+
+```python
+import asyncio
+import datetime
+
+async def display_date():
+    loop = asyncio.get_running_loop()
+    end_time = loop.time() + 5.0
+    while True:
+        print(datetime.datetime.now())
+        if (loop.time() + 1.0) >= end_time:
+            break
+        await asyncio.sleep(1)
+
+asyncio.run(display_date())
+```
+
