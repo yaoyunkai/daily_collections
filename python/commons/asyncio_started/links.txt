@@ -1,3 +1,9 @@
-https://blog.csdn.net/qq_27825451/article/details/86218230
-https://blog.csdn.net/qq_27825451/article/details/86292513
-https://blog.csdn.net/qq_27825451/article/details/86483493
+realpython:
+    https://realpython.com/async-io-python/
+
+CSDN:
+    https://blog.csdn.net/qq_27825451/article/details/86218230
+    https://blog.csdn.net/qq_27825451/article/details/86292513
+    https://blog.csdn.net/qq_27825451/article/details/86483493
+
+https://juejin.cn/post/7053709204099432485
