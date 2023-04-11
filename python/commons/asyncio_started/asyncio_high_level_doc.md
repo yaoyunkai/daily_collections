@@ -150,3 +150,124 @@ async def display_date():
 asyncio.run(display_date())
 ```
 
+### 并发运行任务
+
+`awaitable asyncio.gather(*aws, loop=None, return_exceptions=False)`
+
+```python
+import asyncio
+
+async def factorial(name, number):
+    f = 1
+    for i in range(2, number + 1):
+        print(f"Task {name}: Compute factorial({i})...")
+        await asyncio.sleep(1)
+        f *= i
+    print(f"Task {name}: factorial({number}) = {f}")
+
+async def main():
+    # Schedule three calls *concurrently*:
+    await asyncio.gather(
+        factorial("A", 2),
+        factorial("B", 3),
+        factorial("C", 4),
+    )
+
+asyncio.run(main())
+
+# Expected output:
+#
+#     Task A: Compute factorial(2)...
+#     Task B: Compute factorial(2)...
+#     Task C: Compute factorial(2)...
+#     Task A: factorial(2) = 2
+#     Task B: Compute factorial(3)...
+#     Task C: Compute factorial(3)...
+#     Task B: factorial(3) = 6
+#     Task C: Compute factorial(4)...
+#     Task C: factorial(4) = 24
+```
+
+### Some APIs
+
+```python
+# 保护一个 可等待对象 防止其被 取消
+asyncio.shield(aw)
+
+# 等待 aw 可等待对象 完成，指定 timeout 秒数后超时
+asyncio.wait_for(aw, timeout)
+
+# 并发运行 aws 指定的 可等待对象 并阻塞线程直到满足 return_when 指定的条件
+aysncio.wait(aws, *, loop=None, timeout=None, return_when=ALL_COMPLETED)
+
+# 并发地运行 aws 集合中的 可等待对象。返回一个 Future 对象的迭代器。返回的每个 Future 对象代表来自剩余可等待对象集合的最早结果。
+asyncio.as_completed(aws, *, loop=None, timeout=None)
+
+# 向指定事件循环提交一个协程。线程安全。
+asyncio.run_coroutine_threadsafe(coro, loop)
+    # Create a coroutine
+    coro = asyncio.sleep(1, result=3)
+    # Submit the coroutine to a given loop
+    future = asyncio.run_coroutine_threadsafe(coro, loop)
+    # Wait for the result with an optional timeout argument
+    assert future.result(timeout) == 3
+
+
+```
+
+### 内省
+
+`asyncio.current_task(loop=None)`
+
+返回当前运行的 Task 实例，如果没有正在运行的任务则返回 None。
+
+`asyncio.all_tasks(loop=None)`
+
+返回事件循环所运行的未完成的 Task 对象的集合。
+
+### Task对象
+
+一个与 Future 类似 的对象，可运行 Python 协程。非线程安全。
+
+Task 对象被用来在事件循环中运行协程。如果一个协程在等待一个 Future 对象，Task 对象会挂起该协程的执行并等待该 Future 对象完成。当该 Future 对象 完成，被打包的协程将恢复执行。
+
+事件循环使用协同日程调度: 一个事件循环每次运行一个 Task 对象。而一个 Task 对象会等待一个 Future 对象完成，该事件循环会运行其他 Task、回调或执行 IO 操作。
+
+```python
+async def cancel_me():
+    print('cancel_me(): before sleep')
+
+    try:
+        # Wait for 1 hour
+        await asyncio.sleep(3600)
+    except asyncio.CancelledError:
+        print('cancel_me(): cancel sleep')
+        raise
+    finally:
+        print('cancel_me(): after sleep')
+
+async def main():
+    # Create a "cancel_me" Task
+    task = asyncio.create_task(cancel_me())
+
+    # Wait for 1 second
+    await asyncio.sleep(1)
+
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        print("main(): cancel_me is cancelled now")
+
+asyncio.run(main())
+
+# Expected output:
+#
+#     cancel_me(): before sleep
+#     cancel_me(): cancel sleep
+#     cancel_me(): after sleep
+#     main(): cancel_me is cancelled now
+```
+
+## Stream
+

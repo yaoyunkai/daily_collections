@@ -1,0 +1,76 @@
+contextvars
+
+
+
+
+
+event loop:
+
+AbstractEventLoop (asyncio.events )
+    BaseEventLoop(AbstractEventLoop) (asyncio.base_events )
+        BaseSelectorEventLoop(base_events.BaseEventLoop) (asyncio.selector_events )
+            _WindowsSelectorEventLoop(selector_events.BaseSelectorEventLoop) (asyncio.windows_events)
+
+在 windows中 event loop 实际上是 BaseSelectorEventLoop
+
+    _make_self_pipe()
+
+loop.run_until_complete(main)
+    create task
+    add_done_callback
+    loop.run_forever()
+    return future.result()
+
+
+loop.run_forever:
+
+    loop._run_once()
+
+loop._run_once:
+    process_event
+
+    handle._run
+
+
+loop.call_soon
+    关键是在 _ready append了一个Handle  (collections.deque())
+
+    _call_soon
+        create a Handle
+        _ready.append Handle
+        return handle
+
+
+loop.create_task
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+在 Future set result  or set exception 时，会callback -> 会 loop.call_soon
+
+
+
+Future
+实际上Future在init的时候仅设置了_loop
+
+set_result
+    __schedule_callbacks
+    self._loop.call_soon(callback, self, context=ctx)
+
+
+
+
+
+Task(Future)
+
+    __init__
+        _coro
+        self._loop.call_soon(self.__step, context=self._context)
+        _register_task(self) : 给 asyncio.all_task 使用
+
+
+
+
+
+Handle
+
