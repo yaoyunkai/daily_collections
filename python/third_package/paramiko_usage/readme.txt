@@ -5,6 +5,9 @@ providing both client and server functionality.
 
 https://www.iana.org/assignments/ssh-parameters/ssh-parameters.xhtml
 
+paramiko.Transport(('localhost', 22))
+
+
 -----------------------------------------------------------------------------------------------------------------------
 Client
 
@@ -14,6 +17,13 @@ SSHClient
     设置 Transport的一些参数
     transport.start_client()
     self._auth()
+
+
+exec_command:
+    open_session
+
+    open_channel
+
 
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -70,6 +80,17 @@ _send_kex_init:
 
 _expect_packet:
     kex obj用于注册它期望看到的下一个数据包类型。
+
+
+open_session:
+
+
+open_channel:
+    初始化一个 Channel
+
+
+_send_user_message: 发个消息，但在关键谈判时阻止。这用于用户发起的请求。
+
 
 
 -----------------------------------------------------------------------------------------------------------------------
