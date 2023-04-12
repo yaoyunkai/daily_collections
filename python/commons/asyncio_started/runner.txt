@@ -27,6 +27,9 @@ loop.run_forever:
     loop._run_once()
 
 loop._run_once:
+    compute _scheduled TimerHandle
+    and move to _ready queue
+
     process_event
 
     handle._run
