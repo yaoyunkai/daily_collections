@@ -13,12 +13,15 @@ def do_connect():
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect('xxxx', username='xxxxxx', password='xxxxxxxxxxxx----')
 
-    # 发送指令
-    stdin, stdout, stderr = ssh.exec_command('ls -la')
+    # # 发送指令
+    # stdin, stdout, stderr = ssh.exec_command('ls -la')
+    #
+    # # 打印输出
+    # for line in stdout.readlines():
+    #     print(line.strip())
 
-    # 打印输出
-    for line in stdout.readlines():
-        print(line.strip())
+    chan: paramiko.Channel = ssh.invoke_shell()
+    chan.sendall('\r')
 
     # 关闭连接
     ssh.close()
