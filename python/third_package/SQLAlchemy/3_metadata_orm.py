@@ -17,11 +17,19 @@ some_table = Table("some_table", metadata_obj, autoload_with=engine)
 
 Created at 2023/6/26
 """
-from typing import List, Optional
+from typing import List
+from typing import Optional
 
 import sqlalchemy
-from sqlalchemy import ForeignKey, String, insert
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey
+from sqlalchemy import String
+from sqlalchemy import and_
+from sqlalchemy import or_
+from sqlalchemy import select
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
 
 engine = sqlalchemy.create_engine("sqlite+pysqlite:///:memory:", echo=True)
 
@@ -59,4 +67,34 @@ class Address(Base):
 # print(User.__table__)
 # print(type(User.__table__))
 
-Base.metadata.create_all(engine)
+# Base.metadata.create_all(engine)
+
+
+"""
+Use Select statement
+
+"""
+
+print(select(User))
+
+"""
+row = session.execute(select(User)).first() --> list
+user = session.scalars(select(User)).first() --> SingleResult
+
+"""
+
+print(select(User.name, User.fullname))
+
+stmt = select(User.name, Address).where(User.id == Address.user_id).order_by(Address.id)
+print(stmt)
+
+print(
+    select(Address.email_address).where(
+        and_(
+            or_(User.name == "squidward", User.name == "sandy"),
+            Address.user_id == User.id,
+        )
+    )
+)
+
+print(select(User).filter_by(name="spongebob", fullname="Spongebob Squarepants"))
