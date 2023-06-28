@@ -30,3 +30,18 @@ warning: in the working copy of '.gitignore', CRLF will be replaced by LF the ne
     匹配模式可以以（/）开头防止递归。
     匹配模式可以以（/）结尾指定目录。
     要忽略指定模式以外的文件或目录，可以在模式前加上叹号（!）取反。
+
+
+-----------------------------------------------------------
+git config --show-origin core.autocrlf
+查看配置的来源
+
+core.autocrlf
+    # 提交时转换为LF，检出时转换为CRLF
+    git config --global core.autocrlf true
+
+    # 提交时转换为LF，检出时不转换
+    git config --global core.autocrlf input
+
+    # 提交检出均不转换
+    git config --global core.autocrlf false
