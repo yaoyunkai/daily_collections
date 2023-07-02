@@ -50,7 +50,7 @@ from sqlalchemy import insert
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Session
 
-url = 'mysql+mysqldb://root:password@localhost:3306/demo3?charset=utf8'
+url = 'mysql+mysqldb://root:password@localhost:3306/python_demo1?charset=utf8'
 engine = create_engine(url, pool_recycle=3600, echo=True)
 
 
@@ -138,11 +138,11 @@ def convert_json_data(file_path):
 
 def save_data_to_db():
     with Session(engine) as session:
-        session.execute(insert(AllTestRecord), convert_json_data('data.json'))
+        session.execute(insert(AllTestRecord), convert_json_data('data1.json'))
         session.commit()
 
 
 if __name__ == '__main__':
-    # convert_json_data('data.json')
+    # convert_json_data('data1.json')
     # save_data_to_db()
     pass
