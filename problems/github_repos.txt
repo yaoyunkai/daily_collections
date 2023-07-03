@@ -53,3 +53,8 @@ https://github.com/ziishaned/learn-regex/blob/master/translations/README-cn.md
 
 # shell banner
 https://manytools.org/hacker-tools/ascii-banner/
+
+
+# python register miniconda as default problem
+https://stackoverflow.com/questions/69019206/what-it-means-register-anaconda-as-my-default-python
+
