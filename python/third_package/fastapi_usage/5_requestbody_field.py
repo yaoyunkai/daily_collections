@@ -10,8 +10,10 @@ Request Body: Field
 """
 from typing import Union
 
-from fastapi import Body, FastAPI
-from pydantic import BaseModel, Field
+from fastapi import Body
+from fastapi import FastAPI
+from pydantic import BaseModel
+from pydantic import Field
 
 app = FastAPI()
 

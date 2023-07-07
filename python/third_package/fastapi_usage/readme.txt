@@ -20,7 +20,9 @@ request body: Body
 路径参数和数值校验: Path
 
 
+cookie: Cookie 参数
+    也需要放到function的方法参数中
 
-
-
+header: Header
+默认情况下, Header 将把参数名称的字符从下划线 (_) 转换为连字符 (-) 来提取并记录 headers.
 
