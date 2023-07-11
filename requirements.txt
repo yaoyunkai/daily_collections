@@ -3,4 +3,8 @@ SQLAlchemy==2.0.17
 objprint==0.2.2
 fastapi==0.99.1
 uvicorn==0.22.0
+
+anytree~=2.9.0
+pydantic~=1.10.11
+six~=1.16.0
 python-multipart
