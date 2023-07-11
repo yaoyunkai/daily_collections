@@ -26,3 +26,7 @@ cookie: Cookie 参数
 header: Header
 默认情况下, Header 将把参数名称的字符从下划线 (_) 转换为连字符 (-) 来提取并记录 headers.
 
+
+响应状态码:
+    @app.post("/items/", status_code=201)
+    @app.post("/items/", status_code=status.HTTP_201_CREATED)
