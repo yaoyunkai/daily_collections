@@ -1,0 +1,6 @@
+C3 linearization
+
+
+    方法 function A.f
+    函数 method   o.f
+    
