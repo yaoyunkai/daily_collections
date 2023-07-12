@@ -4,3 +4,14 @@ C3 linearization
     方法 function A.f
     函数 method   o.f
     
+=================================
+class A:
+    __demo = 0
+
+_A__demo
+
+=================================
+
+sys.exit
+os._exit
+

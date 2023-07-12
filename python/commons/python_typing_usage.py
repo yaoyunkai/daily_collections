@@ -23,11 +23,27 @@ A = TypeVar('A', str, bytes)  # Must be exactly str or bytes
 def validate(cls, value: Any, field: 'ModelField', config: 'BaseConfig') -> 'AnyUrl':
 
 
+================================================
+Sequence Iterable
+
+Optional
+
+Union
+
+Union[int, None]  -> Optional[int]
+
+Callable[[int, int], int]
+
+
+Literal['A', 'B']
+
+
+
 Created at 2023/7/7
 """
 
 from logging import Logger
-from typing import Generic
+from typing import Any, Generic, Type
 from typing import List
 from typing import TypeVar
 
@@ -54,3 +70,23 @@ class LoggedVar(Generic[T]):
 
     def log(self, message: str) -> None:
         self.logger.info('%s: %s', self.name, message)
+
+
+class A:
+    name = 'A'
+
+    def compare_other(self, other: 'A') -> bool:
+        return id(self) == id(other)
+
+
+def get_name(o: 'A') -> Any:
+    return o.name
+
+
+def get_name2(t: Type['A']) -> Any:
+    return t.name
+
+
+get_name(A())
+
+get_name2(A)
