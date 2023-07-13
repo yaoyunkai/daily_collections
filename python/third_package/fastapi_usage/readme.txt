@@ -30,3 +30,23 @@ header: Header
 响应状态码:
     @app.post("/items/", status_code=201)
     @app.post("/items/", status_code=status.HTTP_201_CREATED)
+
+
+APIRouter:
+
+router = APIRouter(
+    prefix="/items",
+    tags=["items"],
+    dependencies=[Depends(get_token_header)],
+    responses={404: {"description": "Not found"}},
+)
+
+app.include_router(users.router)
+app.include_router(items.router)
+app.include_router(
+    admin.router,
+    prefix="/admin",
+    tags=["admin"],
+    dependencies=[Depends(get_token_header)],
+    responses={418: {"description": "I'm a teapot"}},
+)
