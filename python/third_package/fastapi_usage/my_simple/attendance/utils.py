@@ -7,7 +7,7 @@ Created at 2023/7/14
 import re
 
 
-def is_valid_person_name(person_name: str) -> bool:
+def is_valid_english_name(person_name: str) -> bool:
     return re.match(r"^[A-Za-z\s'-]+$", person_name) is not None
 
 
