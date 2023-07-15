@@ -38,6 +38,6 @@ async def get_all_records(db: Session = Depends(get_db)):
 
 
 @router.get('/get/{staff_id}/', response_model=List[schemas.AttendanceRecord])
-async def get_record_by_staff_id(staff_id: str, db: Session = Depends(get_db)):
+async def get_records_by_staff_id(staff_id: str, db: Session = Depends(get_db)):
     records = db.query(models.AttendanceRecord).filter(models.AttendanceRecord.staff_id == staff_id).all()
     return records
