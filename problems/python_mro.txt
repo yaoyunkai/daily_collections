@@ -15,3 +15,31 @@ _A__demo
 sys.exit
 os._exit
 
+=================================
+
+python module and package
+
+sys.path 寻找module
+
+
+运行文件夹的 __init__.py 
+
+只会运行 文件夹下面的 __init__.py 
+
+
+import my_package.my_module
+
+绝对import 和 相对import(转换为绝对import)
+
+
+=======================================
+MultiProcess
+
+Popen
+
+fork
+spawn
+
+
+WeakValueDictionary
+
