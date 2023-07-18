@@ -2,6 +2,9 @@
 
 https://docs.sqlalchemy.org/en/20/orm/declarative_tables.html
 
+打卡记录
+请假记录
+
 
 Created at 2023/7/14
 """
