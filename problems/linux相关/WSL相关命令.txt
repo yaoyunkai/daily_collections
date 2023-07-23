@@ -1,0 +1,30 @@
+安装
+    wsl --install
+    
+列出可用的 Linux 发行版
+    wsl -l -o
+
+列出已安装的 Linux 发行版
+    wsl -l -v
+    
+wsl --status : show the wsl status
+
+wsl --shutdown
+
+wsl --terminate <Distribution Name>  立即终止所有正在运行的发行版和 WSL 2 轻量级实用工具虚拟机。
+
+wsl --unregister <DistributionName>  : 卸载发行版
+
+
+-----------------------------------------------------------------
+
+跨 Windows 和 Linux 文件系统工作
+
+
+网络访问
+
+在windows上 localhost
+
+在linux上 方位 windows 
+    cat /etc/resolv.conf
+    nameserver
