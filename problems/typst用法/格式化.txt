@@ -19,3 +19,30 @@ Typst's styling system.
     document          设置 PDF 输出中包含的元数据，如标题和作者
 
 https://typst.app/docs/tutorial/formatting/#page-setup
+
+
+#lorem: 生成 placeholder text. 
+
+其他标记元素的作用与此类似，它们只是相应函数调用的语法糖。 比如标题, 等
+
+
+------------------------------------------------------------------------------------
+
+show rules
+通过显示规则，您可以重新定义 Typst 显示某些元素的方式。
+
+    #show函数
+    
+    #box函数
+    
+    Simple Usage
+    
+    #show "ArtosFlow": name => box[
+      XXx
+      #name
+      XXx
+    ]
+    
+    This report is embedded in the
+    ArtosFlow project. ArtosFlow is a
+    project of the Artos Institute.
