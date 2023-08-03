@@ -21,7 +21,7 @@ Typst's styling system.
 https://typst.app/docs/tutorial/formatting/#page-setup
 
 
-#lorem: 生成 placeholder text. 
+#lorem: 生成随机的句子
 
 其他标记元素的作用与此类似，它们只是相应函数调用的语法糖。 比如标题, 等
 
@@ -46,3 +46,11 @@ show rules
     This report is embedded in the
     ArtosFlow project. ArtosFlow is a
     project of the Artos Institute.
+
+
+------------------------------------------------------------------------------------
+
+set  适用于function
+
+show 适用于 selector: element function, colon 文本、许多函数，甚至整个文档。
+
