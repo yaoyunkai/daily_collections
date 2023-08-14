@@ -31,3 +31,6 @@ if __name__ == '__main__':
     print(user.json())
     print(user.dict())
     pprint.pprint(user.schema())
+
+    print(user.__fields_set__)
+    print(user.__fields__)
