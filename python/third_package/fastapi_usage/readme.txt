@@ -50,3 +50,7 @@ app.include_router(
     dependencies=[Depends(get_token_header)],
     responses={418: {"description": "I'm a teapot"}},
 )
+
+
+# 关闭自动生成的doc
+app = FastAPI(openapi_url=None, redoc_url=None)

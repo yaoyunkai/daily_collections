@@ -9,6 +9,8 @@ from typing import List
 from fastapi import Depends
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi import Request  # NOQA
+from fastapi import Response  # NOQA
 from sqlalchemy.orm import Session
 
 from . import crud
@@ -20,6 +22,23 @@ from .database import engine
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# 第二种使用数据库的方式: 中间件
+"""
+@app.middleware("http")
+async def db_session_middleware(request: Request, call_next):
+    response = Response("Internal server error", status_code=500)
+    try:
+        request.state.db = SessionLocal()
+        response = await call_next(request)
+    finally:
+        request.state.db.close()
+    return response
+
+
+def get_db(request: Request):
+    return request.state.db
+"""
 
 
 # Dependency
