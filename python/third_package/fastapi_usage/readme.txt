@@ -54,3 +54,14 @@ app.include_router(
 
 # 关闭自动生成的doc
 app = FastAPI(openapi_url=None, redoc_url=None)
+
+
+直接使用Request 对象
+
+在路径操作函数中 声明形参: request: Request
+
+---------------------------------------------------------------------
+
+fastapi in docker
+
+
