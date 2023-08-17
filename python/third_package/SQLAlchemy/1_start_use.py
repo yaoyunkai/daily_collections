@@ -12,6 +12,19 @@ text() for Write SQL
 -------------------------------------------------------
 Session & Engine
 
+engine.connect
+engine.begin
+
+result.mappings
+
+
+class Base(DeclarativeBase)
+
+Base.metadata
+
+从数据库中获取Table的结构
+some_table = Table("some_table", metadata_obj, autoload_with=engine)
+
 
 """
 
