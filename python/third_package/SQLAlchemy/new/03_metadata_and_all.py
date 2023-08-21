@@ -20,6 +20,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import desc, func
 from sqlalchemy import insert
 from sqlalchemy import literal_column
+from sqlalchemy import update
 from sqlalchemy.dialects import oracle, postgresql
 from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.orm import Mapped
@@ -29,13 +30,13 @@ from sqlalchemy.orm import relationship
 
 metadata_obj = MetaData()
 
-# engine = create_engine(
-#     url="postgresql+psycopg2://user1:password@localhost/simple_230808", echo=True
-# )
-
 engine = create_engine(
-    url="mysql+mysqldb://root:password@localhost/sql_adv", echo=True
+    url="postgresql+psycopg2://user1:password@localhost/simple_230808", echo=True
 )
+
+# engine = create_engine(
+#     url="mysql+mysqldb://root:password@localhost/sql_adv", echo=True
+# )
 
 user_table = Table(
     "user_account",
@@ -116,12 +117,15 @@ def insert_sql_metadata():
     print(complied)
     print(complied.params)
 
-    # with engine.connect() as conn:
-    #     result = conn.execute(stmt, [{'name': 'tom', 'fullname': 'bob tom'}])
-    #     conn.commit()
-    #
-    #     # 返回tuple的原因: 有联合主键
-    #     print(result.inserted_primary_key)
+    with engine.connect() as conn:
+        result = conn.execute(
+            stmt,
+            # [{'name': 'tom', 'fullname': 'bob tom'}]
+        )
+        conn.commit()
+
+        # 返回tuple的原因: 有联合主键
+        print(result.inserted_primary_key)
 
     with engine.connect() as conn:
         # insert 没有 values的时候会自动根据传入的参数判断
@@ -132,9 +136,9 @@ def insert_sql_metadata():
                 {"name": "patrick", "fullname": "Patrick Star"},
             ],
         )
-        # conn.commit()
+        conn.commit()
 
-        # print(result.rowcount)
+        print(result.rowcount)
 
     print(insert(user_table).values().compile(engine))
 
@@ -392,6 +396,49 @@ def sql_function():
     #  "SQL 返回类型"，指的是函数在数据库侧 SQL 表达式中返回的 SQL 值类型，而不是 Python 函数的 "返回类型"。
     print(func.now().type)
 
+    m1 = func.max(Column("some_int", Integer))
+    print(m1.type)
+
+    m2 = func.max(Column("some_str", String))
+    print(m2.type)
+
+    # 返回类型为空
+    print(func.upper("lowercase").type)
+
+
+def update_sql_stmt():
+    stmt = (
+        update(user_table)
+        .where(user_table.c.name == "patrick")
+        .values(fullname="Patrick the Star")
+    )
+    print(stmt)
+
+    stmt = update(user_table).values(fullname="Username: " + user_table.c.name)
+    print(stmt)
+
+    # 支持executemany
+    stmt = (
+        update(user_table)
+        .where(user_table.c.name == bindparam("oldname"))
+        .values(name=bindparam("newname"))
+    )
+    with engine.connect() as conn:
+        conn.execute(
+            stmt,
+            [
+                {"oldname": "jack", "newname": "ed"},
+                {"oldname": "wendy", "newname": "mary"},
+                {"oldname": "jim", "newname": "jake"},
+            ],
+        )
+
+    # insert& bindparam
+    stmt = insert(user_table).values(name=bindparam('name'), fullname=bindparam('fullname'))
+    print(stmt)
+
+    # rowcount: 表示影响的行数
+
 
 if __name__ == '__main__':
     # print_columns()
@@ -405,4 +452,5 @@ if __name__ == '__main__':
     # select_sql_metadata()
     # from_in_select_sql()
     # scalar_subquery_sql()
-    sql_function()
+    # sql_function()
+    update_sql_stmt()
