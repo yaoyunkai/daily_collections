@@ -101,6 +101,44 @@ Redis.__init__
 
         response_callbacks[command_name](response, **options)
 
+------------------------------------------------------------------------------------
+
+redis 序列化协议: https://redis.io/docs/latest/develop/reference/protocol-spec/
+
+本质就是 type length data   ->>>>> $ *
+        type data          ->>>>>  - + :
+
+$<length>\r\n<data>\r\n
+
+-  error
++  simple string
+:  integer
+*  array
+$  bulk string
+
+
+read_response:
+    $ 会使用 Parser 的 read
+
+
+
+SocketBuffer
+    readline:
+        seek byte_read
+
+        read buf
+            read socket
+
+        read from socket: seek byte_writen at start
+                          write data to buf
+                          update byte_writen
+
+
+    read
+
+
+TextIOWrapper
+
 
 
 Created at 2024/7/23
@@ -123,12 +161,21 @@ def test_get_addr():
 
 
 if __name__ == '__main__':
-    conn = redis.Redis(db=0, encoding='utf8')
-    conn.set('name', 'tom')
+    conn = redis.Redis(db=0, encoding='utf8', decode_responses=True)
+    # conn.set('name', 'tom\nwelcome'.encode('utf8'))
+
+    conn.get('name')
 
     arr = conn.lrange('arr1', 0, -1)
     print(arr)
 
+    length = conn.llen('arr1')
+
     conn.close()
 
     # test_get_addr()
+
+    # f = open('pubsub.py', mode='a')
+    # f.close()
+    #
+    # print(f.__class__)
