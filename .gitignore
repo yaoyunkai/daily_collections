@@ -7,3 +7,5 @@ __pycache__/
 *.so
 
 /.idea/
+
+.venv/
