@@ -1,0 +1,8 @@
+dpkg -L redis-server
+
+apt-get update
+
+useradd
+passwd
+groupadd
+
