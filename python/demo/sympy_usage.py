@@ -57,7 +57,7 @@ def display():
     plt.legend(bbox_to_anchor=(0.74, 0.865))
     bbox_args = dict(boxstyle="round", fc="lightgreen")
     arrow_args = dict(arrowstyle="->", color='g')
-    plt.annotate("(易得交叉点为(85,15))",
+    plt.annotate("(易得交叉点为(85,5))",
                  xy=(86, 6),
                  xytext=(20, 20),
                  ha="left", va="bottom",
