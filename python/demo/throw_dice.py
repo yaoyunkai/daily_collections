@@ -20,8 +20,10 @@ def get_result():
 
 
 if __name__ == '__main__':
-    arr = []
-    for i in range(10_0000):
-        arr.append(get_result())
+    _sum, _cnt = 0, 0
 
-    print(sum(arr) / len(arr))
+    for i in range(10_0000):
+        _cnt += 1
+        _sum += get_result()
+
+    print(_sum / _cnt)
