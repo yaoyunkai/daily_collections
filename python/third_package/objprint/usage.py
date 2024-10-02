@@ -21,6 +21,10 @@ class Player:
         self.coins = {"gold": 1, "silver": 33, "bronze": 57}
         self.position = Position(3, 5)
 
+    @property
+    def pretty_name(self):
+        return f"{self.name}, {self.age}"
+
 
 if __name__ == '__main__':
     op(Player())
