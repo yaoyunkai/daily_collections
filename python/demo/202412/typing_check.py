@@ -11,11 +11,32 @@ abc.Mapping
 
 created at 2024/12/6
 """
-from typing import Any, TypeAlias
+from random import shuffle
+from typing import Any, TypeAlias, TypeVar, Sequence
+from typing import TypedDict
+
+T = TypeVar('T')
+FromTo: TypeAlias = tuple[str, str]
+
+
+def sample(population: Sequence[T], size: int) -> list[T]:
+    if size < 1:
+        raise ValueError('size must be >= 1')
+    result = list(population)
+    shuffle(result)
+    return result[:size]
 
 
 def double(x: Any) -> Any:
     return x * 2
+
+
+#  typedict
+class BookDict(TypedDict):
+    isbn: str
+    title: str
+    authors: list[str]
+    pagecount: int
 
 
 class T1:
@@ -37,8 +58,6 @@ def f2(p: T2) -> None:
 def f3(p: Any) -> None:
     pass
 
-
-FromTo: TypeAlias = tuple[str, str]
 
 if __name__ == '__main__':
     o2 = T2()
