@@ -8,6 +8,7 @@ created at 2024/12/9
 
 import json
 import re
+from datetime import UTC
 from datetime import datetime
 
 from sqlalchemy import String, CHAR, Integer, Boolean, TIMESTAMP, func
@@ -31,6 +32,13 @@ def convert_datetime(val: str):
         raise ValueError
 
     return datetime(*[int(i) for i in matched.groups()])
+
+
+def pretty_output(number: int, unit: str):
+    if number < 2:
+        return f'{number} {unit}'
+    else:
+        return f'{number} {unit}s'
 
 
 class Base(DeclarativeBase):
@@ -63,9 +71,6 @@ class TestRecord(Base):
 
     create_time: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
     first_pass: Mapped[str] = mapped_column(CHAR(1), server_default='N')  # N == None, T == True, F == False
-
-
-Base.metadata.create_all(engine)
 
 
 def load_data_from_json(filename: str):
@@ -110,7 +115,7 @@ def compute_first_pass():
     """
     print('start compute first pass')
 
-    cur_time = datetime.utcnow()
+    cur_time = datetime.now(tz=UTC)
     session = Session(engine)
 
     dataset_sql = (
@@ -118,9 +123,18 @@ def compute_first_pass():
         where(TestRecord.first_pass == 'N', TestRecord.record_time < cur_time).
         order_by(asc(TestRecord.record_time))
     )
-    dataset = session.execute(dataset_sql)
-    print(f'get {len(dataset.all())} from db')
+    dataset = session.scalars(dataset_sql).all()
+
+    print('fetch {} from db'.format(pretty_output(len(dataset), 'row')))
+    _sernum_area_set = set()
+
+    for test_record in dataset:
+        record_time = test_record.record_time
+        sernum = test_record.sernum
+        area = test_record.area
+        print(f'{record_time} {sernum} {area}')
 
 
 if __name__ == '__main__':
+    Base.metadata.create_all(engine)
     compute_first_pass()
