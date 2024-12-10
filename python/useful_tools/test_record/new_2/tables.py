@@ -18,11 +18,15 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
 
+
 # logging.basicConfig(level=logging.DEBUG, format='%(message)s', stream=sys.stdout)
 # logger = logging.getLogger(__name__)
 
-url = 'mysql+mysqldb://root:password@localhost:3306/sql_adv?charset=utf8'
-engine = create_engine(url, echo=True)
+
+def get_db_connection():
+    url = 'mysql+mysqldb://root:password@localhost:3306/sql_adv?charset=utf8'
+    engine = create_engine(url, echo=True)
+    return engine
 
 
 def convert_datetime(val: str):
@@ -73,9 +77,12 @@ class TestRecord(Base):
     first_pass: Mapped[str] = mapped_column(CHAR(1), server_default='N')  # N == None, T == True, F == False
 
 
-def load_data_from_json(filename: str):
+def load_data_from_json(filename: str, engine=None):
     data = json.load(open(filename))
     data = data['results']['data']
+
+    if engine is None:
+        engine = get_db_connection()
 
     session = Session(engine)
     cnt = 0
@@ -107,13 +114,15 @@ def load_data_from_json(filename: str):
     session.commit()
 
 
-def compute_first_pass():
+def compute_first_pass(engine=None):
     """
     1. get dataset , first_pass == 'N', and record time < current, order by record time.
     2. 检查是否为first_pass: a, 检查之前的 first_pass != N, 检查当前的数据集。
 
     """
     print('start compute first pass')
+    if engine is None:
+        engine = get_db_connection()
 
     cur_time = datetime.now(tz=UTC)
     session = Session(engine)
@@ -136,5 +145,5 @@ def compute_first_pass():
 
 
 if __name__ == '__main__':
-    Base.metadata.create_all(engine)
+    # Base.metadata.create_all(engine)
     compute_first_pass()
