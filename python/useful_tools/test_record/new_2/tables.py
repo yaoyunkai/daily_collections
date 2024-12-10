@@ -12,9 +12,13 @@ from datetime import datetime
 
 from sqlalchemy import String, CHAR, Integer, Boolean, TIMESTAMP, func
 from sqlalchemy import create_engine
+from sqlalchemy import select, asc
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
+
+# logging.basicConfig(level=logging.DEBUG, format='%(message)s', stream=sys.stdout)
+# logger = logging.getLogger(__name__)
 
 url = 'mysql+mysqldb://root:password@localhost:3306/sql_adv?charset=utf8'
 engine = create_engine(url, echo=True)
@@ -98,5 +102,25 @@ def load_data_from_json(filename: str):
     session.commit()
 
 
+def compute_first_pass():
+    """
+    1. get dataset , first_pass == 'N', and record time < current, order by record time.
+    2. 检查是否为first_pass: a, 检查之前的 first_pass != N, 检查当前的数据集。
+
+    """
+    print('start compute first pass')
+
+    cur_time = datetime.utcnow()
+    session = Session(engine)
+
+    dataset_sql = (
+        select(TestRecord).
+        where(TestRecord.first_pass == 'N', TestRecord.record_time < cur_time).
+        order_by(asc(TestRecord.record_time))
+    )
+    dataset = session.execute(dataset_sql)
+    print(f'get {len(dataset.all())} from db')
+
+
 if __name__ == '__main__':
-    pass
+    compute_first_pass()
