@@ -26,7 +26,7 @@ create table if not exists md5_result
 
 def init_db(conn=None):
     if not conn:
-        conn = sqlite3.connect('data.db')
+        conn = sqlite3.connect('md5_data.db')
 
     cursor = conn.cursor()
     try:

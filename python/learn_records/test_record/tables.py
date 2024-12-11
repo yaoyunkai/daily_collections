@@ -225,5 +225,5 @@ def get_test_record_by_sernum(sernum, engine=None):
 
 if __name__ == '__main__':
     # Base.metadata.create_all(engine)
-    # compute_first_pass()
+    compute_first_pass()
     pass
