@@ -218,7 +218,7 @@ def get_test_record_by_sernum(sernum, engine=None):
     for item in dataset:
         _dict = dict()
         for k, v in item.__dict__.items():
-            if not k.startswith('_') and k not in ['id', 'create_time']:
+            if not k.startswith('_') and k not in ['id', 'create_time', 'first_pass']:
                 _dict[k] = v
 
             # convert datetime to string
