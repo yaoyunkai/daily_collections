@@ -21,6 +21,8 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
 
+no_arg = object()
+
 
 def get_db_connection():
     url = 'mysql+mysqldb://root:password@localhost:3306/sql_adv?charset=utf8'
@@ -35,6 +37,10 @@ def convert_datetime(val: str):
         raise ValueError
 
     return datetime(*[int(i) for i in matched.groups()])
+
+
+def datetime_to_str(val: datetime):
+    return val.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def pretty_output(number: int, unit: str):
@@ -57,7 +63,7 @@ class TestRecord(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    record_time: Mapped[datetime]
+    record_time: Mapped[datetime]  # UTC timezone
     sernum: Mapped[str] = mapped_column(String(50))  # upper
     uuttype: Mapped[str] = mapped_column(String(50))  # upper
     area: Mapped[str] = mapped_column(String(20))  # upper
@@ -216,6 +222,8 @@ def get_test_record_by_sernum(sernum, engine=None):
                 _dict[k] = v
 
             # convert datetime to string
+            if isinstance(v, datetime):
+                _dict[k] = datetime_to_str(v)
 
         _result.append(_dict)
 
@@ -223,7 +231,11 @@ def get_test_record_by_sernum(sernum, engine=None):
     return _result
 
 
+def get_test_record(front_dict: dict):
+    pass
+
+
 if __name__ == '__main__':
     # Base.metadata.create_all(engine)
-    compute_first_pass()
-    pass
+    # compute_first_pass()
+    get_test_record_by_sernum('FCW2845Y0BK')
