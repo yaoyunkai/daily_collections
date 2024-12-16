@@ -10,7 +10,7 @@ import numpy as np
 
 from matplotlib import rcParams
 
-rcParams['font.sans-serif'] = ['Microsoft Yahei', 'SimHei']  # 使用黑体
+rcParams['font.sans-serif'] = ['SimHei', ]  # 使用黑体
 rcParams['axes.unicode_minus'] = False  # 避免坐标轴负号显示问题
 
 
@@ -34,8 +34,8 @@ def draw_x_y():
     plt.annotate("A",
                  xy=(50, cooldown(50)),
                  xytext=(20, 20),
-                 # ha="right",
-                 # va="bottom",
+                 ha="right",
+                 va="bottom",
                  bbox=bbox_args,
                  arrowprops=dict(connectionstyle="arc3,rad=-0.2", **arrow_args))
 
