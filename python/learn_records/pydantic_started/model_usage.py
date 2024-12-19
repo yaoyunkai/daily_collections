@@ -21,10 +21,24 @@ model_fields_set           初始化传入的字段。
 
 from_orm
 
+动态模型创建。 create_model
+
+RootModel
+
+
+排除的属性
+
+ClassVar
+
+extra fields:
+
+model_config 控制模型设置。
+
 
 
 created at 2024/12/17
 """
+from typing import ClassVar
 
 from pydantic import BaseModel
 
@@ -39,6 +53,8 @@ class User(BaseModel):
     name: str
     signup_ts: str = None
 
+    types: ClassVar[str] = 'USER'
+
 
 if __name__ == '__main__':
     for k in vars(User):
@@ -49,10 +65,9 @@ if __name__ == '__main__':
     user = User.model_validate(data)
     print(user)
 
-    user2 = User.model_construct(id='abc', name=1234,)
+    user2 = User.model_construct(id='abc', name=1234, )
     print(user2)
     print(user2.model_fields_set)
     # user3 = User.model_validate(user2.model_dump())
 
     # print(user2.model_extra)
-
