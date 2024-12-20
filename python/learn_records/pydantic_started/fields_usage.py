@@ -28,13 +28,12 @@ created at 2024/12/19
 """
 import random
 from pprint import pprint  # NOQA
-from typing import List
+from typing import List, Annotated
 
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import ValidationError
 from pydantic import WithJsonSchema
-from typing_extensions import Annotated
 
 
 def get_demo_value():
