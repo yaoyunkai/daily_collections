@@ -25,13 +25,13 @@ Enum:
 created at 2024/12/12
 """
 import re
-from datetime import date
+from datetime import date, datetime
 from enum import Enum, IntFlag, auto
 from functools import partial
 from re import Pattern
 from typing import Optional, Self
 
-from pydantic import BaseModel, model_validator, ValidationError  # NOQA
+from pydantic import BaseModel, model_validator, ValidationError, ConfigDict  # NOQA
 
 SEPARATOR = ','
 
@@ -55,6 +55,8 @@ def is_blank(value: str):
 
 def get_params_from_value(value: str, param_pattern: Pattern) -> list[Param]:
     results = []
+
+    # because value may be null
     if is_blank(value):
         return results
 
@@ -116,6 +118,24 @@ class PassFailFlag(IntFlag):
     @staticmethod
     def is_flag_set(flag: int, val: int):
         return (flag & val) == flag
+
+
+class PyTestRecord(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    record_time: datetime
+    sernum: str
+    uuttype: str
+    area: str
+    passfail: str
+    run_time: int = 0
+    test_failure: str = ''
+    machine: str
+    test_container: str
+    test_user: str
+    test_mode: str
+    deviation: str
+    bf_status: bool
 
 
 class MultiSearch(BaseModel):

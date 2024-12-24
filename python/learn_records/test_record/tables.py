@@ -23,18 +23,24 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
 
 from utils import (
-    MultiSearch, ParamType, DataType, PassFailFlag,
+    MultiSearch, ParamType, DataType, PassFailFlag, PyTestRecord,
     get_params_from_sernum, get_params_from_uuttype,
     get_params_from_machine, get_params_from_area
 )
 
 no_arg = object()
 
-func_map = {
+FUNC_MAP = {
     'sernum': get_params_from_sernum,
     'uuttype': get_params_from_uuttype,
     'machine': get_params_from_machine,
     'area': get_params_from_area,
+}
+
+PASSFAIL_MAP = {
+    PassFailFlag.Start: 'S',
+    PassFailFlag.Fail: 'F',
+    PassFailFlag.Pass: 'P',
 }
 
 FPY_NULL = 'N'
@@ -238,16 +244,8 @@ def get_test_record_by_sernum(sernum, engine=None):
     dataset = session.scalars(_sql)
     dataset = dataset.all()
     for item in dataset:
-        _dict = dict()
-        for k, v in item.__dict__.items():
-            if not k.startswith('_') and k not in ['id', 'create_time', 'first_pass']:
-                _dict[k] = v
-
-            # convert datetime to string
-            if isinstance(v, datetime):
-                _dict[k] = datetime_to_str(v)
-
-        _result.append(_dict)
+        tmp_obj = PyTestRecord.model_validate(item)
+        _result.append(tmp_obj.model_dump())
 
     pprint(_result)
     return _result
@@ -271,7 +269,7 @@ def get_test_record(front_dict: dict, engine=None):
     _param_list = []
     for param_name in ['sernum', 'uuttype', 'machine', 'area']:
         params = getattr(m_obj, param_name)
-        params = func_map[param_name](params)
+        params = FUNC_MAP[param_name](params)
         field_obj = getattr(TestRecord, param_name)
 
         if len(params) > 0:
@@ -300,12 +298,11 @@ def get_test_record(front_dict: dict, engine=None):
         )
 
     _passfail = []
-    if PassFailFlag.is_flag_set(PassFailFlag.Start, m_obj.passfail):
-        _passfail.append('S')
-    if PassFailFlag.is_flag_set(PassFailFlag.Fail, m_obj.passfail):
-        _passfail.append('F')
-    if PassFailFlag.is_flag_set(PassFailFlag.Pass, m_obj.passfail):
-        _passfail.append('P')
+    for flag in [PassFailFlag.Start, PassFailFlag.Fail, PassFailFlag.Pass]:
+        if PassFailFlag.is_flag_set(flag, m_obj.passfail):
+            _passfail.append(
+                PASSFAIL_MAP[flag]
+            )
 
     _sql_condition_list.append(
         TestRecord.passfail.in_(_passfail)
@@ -321,16 +318,8 @@ def get_test_record(front_dict: dict, engine=None):
     )
     dataset = dataset.all()
     for item in dataset:
-        _dict = dict()
-        for k, v in item.__dict__.items():
-            if not k.startswith('_') and k not in ['id', 'create_time', 'first_pass']:
-                _dict[k] = v
-
-            # convert datetime to string
-            if isinstance(v, datetime):
-                _dict[k] = datetime_to_str(v)
-
-        _final_results.append(_dict)
+        tmp_obj = PyTestRecord.model_validate(item)
+        _final_results.append(tmp_obj.model_dump())
 
     pprint(_final_results)
     return _final_results
@@ -339,14 +328,15 @@ def get_test_record(front_dict: dict, engine=None):
 if __name__ == '__main__':
     # Base.metadata.create_all(engine)
     # compute_first_pass()
+
+    # get_test_record_by_sernum('FCW2845Y0P3')
+
     data1 = dict(
         # sernum='',
-        uuttype='IE-%,IEM-%',
+        uuttype='IE-3500-8P3S-%',
         start_date='2024-11-20',
         end_date='2024-12-12',
         data_type='all',
         passfail=PassFailFlag.Fail | PassFailFlag.Pass,
     )
     get_test_record(data1)
-
-    # get_test_record_by_sernum('FCW2845Y0P3')
