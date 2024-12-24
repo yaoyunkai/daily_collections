@@ -97,9 +97,15 @@ class DataType(Enum):
 
     """
 
-    ALL = 'all'  # default all, get all test record
     FPY = 'first_pass_yield'
     BOARD = 'board_yield'
+    TEST = 'test_yield'  # default is test yield
+
+
+class ViewType(Enum):
+    NoDate = auto()
+    Week = auto()
+    Month = auto()
 
 
 class PassFailFlag(IntFlag):
@@ -138,6 +144,30 @@ class PyTestRecord(BaseModel):
     bf_status: bool
 
 
+class YieldParams(BaseModel):
+    # support %
+    sernum: Optional[str] = None
+    uuttype: Optional[str] = None
+    machine: Optional[str] = None
+    area: Optional[str] = None
+
+    start_date: date
+    end_date: date
+
+    view_type: ViewType = ViewType.NoDate
+    yield_type: DataType = DataType.FPY
+
+    @model_validator(mode='after')
+    def check_model_fields(self) -> Self:
+        if is_blank(self.sernum) and is_blank(self.uuttype) and is_blank(self.machine) and is_blank(self.area):
+            raise ValueError('sernum & uuttype & machine & area: cannot all be empty')
+
+        if self.start_date > self.end_date:
+            raise ValueError('start date must <= end date')
+
+        return self
+
+
 class MultiSearch(BaseModel):
     # support %
     sernum: Optional[str] = None
@@ -148,7 +178,7 @@ class MultiSearch(BaseModel):
     start_date: date
     end_date: date
 
-    data_type: DataType = DataType.ALL
+    data_type: DataType = DataType.TEST
     passfail: PassFailFlag = PassFailFlag.Pass | PassFailFlag.Fail
 
     select_start: bool = False
@@ -177,7 +207,7 @@ if __name__ == '__main__':
         sernum='demo1',
         start_date='2024-12-10',
         end_date='2024-12-12',
-        data_type='all',
+        data_type=DataType.TEST,
         passfail=PassFailFlag.Fail,
     )
 
@@ -189,5 +219,5 @@ if __name__ == '__main__':
     # for item in obj2:
     #     print(item.__repr__())
 
-    print(get_params_from_uuttype('IEM-3400, IEM-3400-%, IE-3000, IE-4500-%'))
+    print(get_params_from_uuttype('IEM-3400, IEM-3400-%, IE-3000, IE-4500-%,'))
     print(get_params_from_uuttype('IE-34550,'))

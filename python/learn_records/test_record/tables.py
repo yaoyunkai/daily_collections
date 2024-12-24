@@ -22,6 +22,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
 
+from daily_collections.python.learn_records.test_record.utils import YieldParams
 from utils import (
     MultiSearch, ParamType, DataType, PassFailFlag, PyTestRecord,
     get_params_from_sernum, get_params_from_uuttype,
@@ -323,6 +324,23 @@ def get_test_record(front_dict: dict, engine=None):
 
     pprint(_final_results)
     return _final_results
+
+
+def get_test_yield(front_dict: dict, engine=None):
+    """
+    use pandas for compute yield / sql compute yield
+
+    """
+    if engine is None:
+        engine = get_db_connection()
+
+    session = Session(engine)
+
+    try:
+        m_obj = YieldParams.model_validate(front_dict)
+    except Exception as e:
+        print(e)
+        raise ParamException(e)
 
 
 if __name__ == '__main__':
