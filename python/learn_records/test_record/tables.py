@@ -9,19 +9,37 @@ created at 2024/12/9
 import json
 import re
 import time
-from datetime import UTC
+from datetime import UTC, timedelta
 from datetime import datetime
 from pprint import pprint  # NOQA
 
 from objprint import op  # NOQA
 from sqlalchemy import String, CHAR, Integer, Boolean, TIMESTAMP, func
 from sqlalchemy import create_engine
+from sqlalchemy import or_  # NOQA
 from sqlalchemy import select, asc, text
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
 
+from utils import (
+    MultiSearch, ParamType, DataType, PassFailFlag,
+    get_params_from_sernum, get_params_from_uuttype,
+    get_params_from_machine, get_params_from_area
+)
+
 no_arg = object()
+
+func_map = {
+    'sernum': get_params_from_sernum,
+    'uuttype': get_params_from_uuttype,
+    'machine': get_params_from_machine,
+    'area': get_params_from_area,
+}
+
+
+class ParamException(Exception):
+    pass
 
 
 def get_db_connection():
@@ -187,7 +205,7 @@ def compute_first_pass(engine=None):
         else:
             first_pass = False
         print(f'db record ({test_record.id}) "{record_time} {sernum} {area}" first_pass flag is {first_pass}')
-        test_record.first_pass = 'Y' if first_pass else 'F'
+        test_record.first_pass = 'T' if first_pass else 'F'
         _sernum_area_set.add(sernum_area)
 
         session.add(test_record)
@@ -231,11 +249,135 @@ def get_test_record_by_sernum(sernum, engine=None):
     return _result
 
 
-def get_test_record(front_dict: dict):
-    pass
+def get_test_record(front_dict: dict, engine=None):
+    if engine is None:
+        engine = get_db_connection()
+
+    session = Session(engine)
+
+    try:
+        m_obj = MultiSearch.model_validate(front_dict)
+    except Exception as e:
+        print(e)
+        raise ParamException(e)
+
+    # 1. 处理 sernum, uuttype, machine, area
+    _sql_condition_list = []
+    _param_list = []
+    sernum_params = get_params_from_sernum(m_obj.sernum)
+    if len(sernum_params) > 0:
+        for param, param_type in sernum_params:
+            if param_type is ParamType.Normal:
+                _param_list.append(
+                    TestRecord.sernum == param,
+                )
+            if param_type is ParamType.FuzzyQ:
+                _param_list.append(
+                    TestRecord.sernum.like(param),
+                )
+        _sql_condition_list.append(or_(*_param_list))
+        _param_list.clear()
+
+    uuttype_params = get_params_from_uuttype(m_obj.uuttype)
+    if len(uuttype_params) > 0:
+        for param, param_type in uuttype_params:
+            if param_type is ParamType.Normal:
+                _param_list.append(
+                    TestRecord.uuttype == param,
+                )
+            if param_type is ParamType.FuzzyQ:
+                _param_list.append(
+                    TestRecord.uuttype.like(param),
+                )
+        _sql_condition_list.append(or_(*_param_list))
+        _param_list.clear()
+
+    machine_params = get_params_from_machine(m_obj.machine)
+    if len(machine_params) > 0:
+        for param, param_type in machine_params:
+            if param_type is ParamType.Normal:
+                _param_list.append(
+                    TestRecord.machine == param,
+                )
+            if param_type is ParamType.FuzzyQ:
+                _param_list.append(
+                    TestRecord.machine.like(param),
+                )
+        _sql_condition_list.append(or_(*_param_list))
+        _param_list.clear()
+
+    area_params = get_params_from_area(m_obj.area)
+    if len(area_params) > 0:
+        for param, param_type in area_params:
+            if param_type is ParamType.Normal:
+                _param_list.append(
+                    TestRecord.area == param,
+                )
+            if param_type is ParamType.FuzzyQ:
+                _param_list.append(
+                    TestRecord.area.like(param),
+                )
+        _sql_condition_list.append(or_(*_param_list))
+        _param_list.clear()
+
+    _sql_condition_list.append(
+        TestRecord.record_time.between(
+            m_obj.start_date,
+            m_obj.end_date + timedelta(days=1)
+        )
+    )
+
+    if m_obj.data_type is DataType.FPY:
+        _sql_condition_list.append(
+            TestRecord.first_pass == 'T'
+        )
+
+    _passfail = []
+    if PassFailFlag.is_flag_set(PassFailFlag.Start, m_obj.passfail):
+        _passfail.append('S')
+    if PassFailFlag.is_flag_set(PassFailFlag.Fail, m_obj.passfail):
+        _passfail.append('F')
+    if PassFailFlag.is_flag_set(PassFailFlag.Pass, m_obj.passfail):
+        _passfail.append('P')
+
+    _sql_condition_list.append(
+        TestRecord.passfail.in_(_passfail)
+    )
+
+    # 开始查询
+    _final_results = []
+
+    dataset = session.scalars(
+        select(TestRecord).
+        where(*_sql_condition_list).
+        order_by(asc(TestRecord.record_time))
+    )
+    dataset = dataset.all()
+    for item in dataset:
+        _dict = dict()
+        for k, v in item.__dict__.items():
+            if not k.startswith('_') and k not in ['id', 'create_time', 'first_pass']:
+                _dict[k] = v
+
+            # convert datetime to string
+            if isinstance(v, datetime):
+                _dict[k] = datetime_to_str(v)
+
+        _final_results.append(_dict)
+
+    pprint(_final_results)
+    return _final_results
 
 
 if __name__ == '__main__':
     # Base.metadata.create_all(engine)
     # compute_first_pass()
-    get_test_record_by_sernum('FCW2845Y0BK')
+    data1 = dict(
+        # sernum='',
+        uuttype='IE-%,IEM-%',
+        start_date='2024-11-20',
+        end_date='2024-12-12',
+        data_type='all',
+        passfail=PassFailFlag.Fail | PassFailFlag.Pass,
+    )
+    get_test_record(data1)
