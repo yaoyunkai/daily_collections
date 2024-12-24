@@ -37,6 +37,10 @@ func_map = {
     'area': get_params_from_area,
 }
 
+FPY_NULL = 'N'
+FPY_TRUE = 'T'
+FPY_FALSE = 'F'
+
 
 class ParamException(Exception):
     pass
@@ -127,7 +131,7 @@ def load_data_from_json(filename: str, engine=None):
         tr_obj.deviation = item['attributes'].get('DEVIATION', 'D000000')
         tr_obj.bf_status = True if item.get('bfstatus') == 'YES' else False
 
-        tr_obj.first_pass = 'N'
+        tr_obj.first_pass = FPY_NULL
         # op(t_obj)
 
         session.add(tr_obj)
@@ -180,7 +184,7 @@ def compute_first_pass(engine=None):
 
     dataset_sql = (
         select(TestRecord).
-        where(TestRecord.first_pass == 'N', TestRecord.record_time < cur_time).
+        where(TestRecord.first_pass == FPY_NULL, TestRecord.record_time < cur_time).
         order_by(asc(TestRecord.record_time))
     )
     dataset = session.scalars(dataset_sql).all()
@@ -205,7 +209,7 @@ def compute_first_pass(engine=None):
         else:
             first_pass = False
         print(f'db record ({test_record.id}) "{record_time} {sernum} {area}" first_pass flag is {first_pass}')
-        test_record.first_pass = 'T' if first_pass else 'F'
+        test_record.first_pass = FPY_TRUE if first_pass else FPY_FALSE
         _sernum_area_set.add(sernum_area)
 
         session.add(test_record)
@@ -261,64 +265,27 @@ def get_test_record(front_dict: dict, engine=None):
         print(e)
         raise ParamException(e)
 
-    # 1. 处理 sernum, uuttype, machine, area
     _sql_condition_list = []
+
+    # 1. 处理 sernum, uuttype, machine, area
     _param_list = []
-    sernum_params = get_params_from_sernum(m_obj.sernum)
-    if len(sernum_params) > 0:
-        for param, param_type in sernum_params:
-            if param_type is ParamType.Normal:
-                _param_list.append(
-                    TestRecord.sernum == param,
-                )
-            if param_type is ParamType.FuzzyQ:
-                _param_list.append(
-                    TestRecord.sernum.like(param),
-                )
-        _sql_condition_list.append(or_(*_param_list))
-        _param_list.clear()
+    for param_name in ['sernum', 'uuttype', 'machine', 'area']:
+        params = getattr(m_obj, param_name)
+        params = func_map[param_name](params)
+        field_obj = getattr(TestRecord, param_name)
 
-    uuttype_params = get_params_from_uuttype(m_obj.uuttype)
-    if len(uuttype_params) > 0:
-        for param, param_type in uuttype_params:
-            if param_type is ParamType.Normal:
-                _param_list.append(
-                    TestRecord.uuttype == param,
-                )
-            if param_type is ParamType.FuzzyQ:
-                _param_list.append(
-                    TestRecord.uuttype.like(param),
-                )
-        _sql_condition_list.append(or_(*_param_list))
-        _param_list.clear()
-
-    machine_params = get_params_from_machine(m_obj.machine)
-    if len(machine_params) > 0:
-        for param, param_type in machine_params:
-            if param_type is ParamType.Normal:
-                _param_list.append(
-                    TestRecord.machine == param,
-                )
-            if param_type is ParamType.FuzzyQ:
-                _param_list.append(
-                    TestRecord.machine.like(param),
-                )
-        _sql_condition_list.append(or_(*_param_list))
-        _param_list.clear()
-
-    area_params = get_params_from_area(m_obj.area)
-    if len(area_params) > 0:
-        for param, param_type in area_params:
-            if param_type is ParamType.Normal:
-                _param_list.append(
-                    TestRecord.area == param,
-                )
-            if param_type is ParamType.FuzzyQ:
-                _param_list.append(
-                    TestRecord.area.like(param),
-                )
-        _sql_condition_list.append(or_(*_param_list))
-        _param_list.clear()
+        if len(params) > 0:
+            for param, param_type in params:
+                if param_type is ParamType.Normal:
+                    _param_list.append(
+                        field_obj == param
+                    )
+                if param_type is ParamType.FuzzyQ:
+                    _param_list.append(
+                        field_obj.like(param)
+                    )
+            _sql_condition_list.append(or_(*_param_list))
+            _param_list.clear()
 
     _sql_condition_list.append(
         TestRecord.record_time.between(
@@ -381,3 +348,5 @@ if __name__ == '__main__':
         passfail=PassFailFlag.Fail | PassFailFlag.Pass,
     )
     get_test_record(data1)
+
+    # get_test_record_by_sernum('FCW2845Y0P3')
