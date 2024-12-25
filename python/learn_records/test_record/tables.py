@@ -3,6 +3,27 @@ Base.metadata.create_all(engine)
 
 session.flush()
 
+with unique_sernum as (select uuttype,
+                              count(distinct sernum) as total_qty
+                       from test_record
+                       group by uuttype),
+     pass_fail_stats as (select uuttype,
+                                area,
+                                sum(IF(passfail = 'P', 1, 0))         as passed_cnt,
+                                sum(IF(passfail = 'F', 1, 0))         as failed_cnt,
+                                sum(IF(passfail in ('P', 'F'), 1, 0)) as total_cnt
+                         from test_record
+                         group by uuttype, area)
+select pfs.uuttype,
+       pfs.area,
+       us.total_qty,
+       pfs.passed_cnt,
+       pfs.failed_cnt,
+       pfs.total_cnt
+from pass_fail_stats pfs
+         join unique_sernum us on pfs.uuttype = us.uuttype;
+
+
 created at 2024/12/9
 """
 
@@ -13,6 +34,7 @@ from datetime import UTC, timedelta
 from datetime import datetime
 from pprint import pprint  # NOQA
 
+import pandas as pd
 from objprint import op  # NOQA
 from sqlalchemy import String, CHAR, Integer, Boolean, TIMESTAMP, func
 from sqlalchemy import create_engine
@@ -22,7 +44,6 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
 
-from daily_collections.python.learn_records.test_record.utils import YieldParams
 from utils import (
     MultiSearch, ParamType, DataType, PassFailFlag, PyTestRecord,
     get_params_from_sernum, get_params_from_uuttype,
@@ -139,6 +160,7 @@ def load_data_from_json(filename: str, engine=None):
         tr_obj.bf_status = True if item.get('bfstatus') == 'YES' else False
 
         tr_obj.first_pass = FPY_NULL
+        # tr_obj.first_pass = FPY_TRUE if item['firstpass'] else FPY_FALSE
         # op(t_obj)
 
         session.add(tr_obj)
@@ -330,17 +352,37 @@ def get_test_yield(front_dict: dict, engine=None):
     """
     use pandas for compute yield / sql compute yield
 
+    two actions:
+        query   data
+        analyse data
+
     """
     if engine is None:
         engine = get_db_connection()
 
     session = Session(engine)
 
-    try:
-        m_obj = YieldParams.model_validate(front_dict)
-    except Exception as e:
-        print(e)
-        raise ParamException(e)
+    table_df = pd.read_sql_table(
+        TestRecord.__tablename__, con=engine,
+        columns=[
+            'record_time',
+            'sernum',
+            'uuttype',
+            'area',
+            'passfail',
+            'first_pass'
+        ]
+    )
+    table_df['first_pass'] = table_df['first_pass'].map({'T': True, 'F': False})
+
+    print(table_df)
+    print(table_df.dtypes)
+
+    # try:
+    #     m_obj = YieldParams.model_validate(front_dict)
+    # except Exception as e:
+    #     print(e)
+    #     raise ParamException(e)
 
 
 if __name__ == '__main__':
@@ -349,12 +391,14 @@ if __name__ == '__main__':
 
     # get_test_record_by_sernum('FCW2845Y0P3')
 
-    data1 = dict(
-        # sernum='',
-        uuttype='IE-3500-8P3S-%',
-        start_date='2024-11-20',
-        end_date='2024-12-12',
-        data_type='test_yield',
-        passfail=PassFailFlag.Fail | PassFailFlag.Pass,
-    )
-    get_test_record(data1)
+    # data1 = dict(
+    #     # sernum='',
+    #     uuttype='IE-3500-8P3S-%',
+    #     start_date='2024-11-20',
+    #     end_date='2024-12-12',
+    #     data_type='test_yield',
+    #     passfail=PassFailFlag.Fail | PassFailFlag.Pass,
+    # )
+    # get_test_record(data1)
+
+    get_test_yield(dict())
