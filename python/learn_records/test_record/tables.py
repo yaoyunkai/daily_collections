@@ -354,7 +354,7 @@ if __name__ == '__main__':
         uuttype='IE-3500-8P3S-%',
         start_date='2024-11-20',
         end_date='2024-12-12',
-        data_type='all',
+        data_type='test_yield',
         passfail=PassFailFlag.Fail | PassFailFlag.Pass,
     )
     get_test_record(data1)
