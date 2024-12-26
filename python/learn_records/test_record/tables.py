@@ -286,7 +286,7 @@ def get_test_record(front_dict: dict, engine=None):
 
     if m_obj.data_type is DataType.FPY:
         _sql_condition_list.append(
-            TestRecord.first_pass == 'T'
+            TestRecord.first_pass == FPY_TRUE
         )
 
     _passfail = []
@@ -376,5 +376,12 @@ if __name__ == '__main__':
     # Base.metadata.create_all(engine)
     # compute_first_pass()
 
-    # get_test_record_by_sernum('FCW2845Y0P3')
-    get_test_yield({})
+    _query = {
+        'uuttype': 'IE-3500-%',
+        'start_date': '2024-12-01',
+        'end_date': '2024-12-20',
+        'data_type': 'test_yield',
+        'passfail': PassFailFlag.Fail,
+    }
+
+    get_test_record(_query)
