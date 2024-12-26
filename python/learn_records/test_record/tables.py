@@ -3,27 +3,6 @@ Base.metadata.create_all(engine)
 
 session.flush()
 
-with unique_sernum as (select uuttype,
-                              count(distinct sernum) as total_qty
-                       from test_record
-                       group by uuttype),
-     pass_fail_stats as (select uuttype,
-                                area,
-                                sum(IF(passfail = 'P', 1, 0))         as passed_cnt,
-                                sum(IF(passfail = 'F', 1, 0))         as failed_cnt,
-                                sum(IF(passfail in ('P', 'F'), 1, 0)) as total_cnt
-                         from test_record
-                         group by uuttype, area)
-select pfs.uuttype,
-       pfs.area,
-       us.total_qty,
-       pfs.passed_cnt,
-       pfs.failed_cnt,
-       pfs.total_cnt
-from pass_fail_stats pfs
-         join unique_sernum us on pfs.uuttype = us.uuttype;
-
-
 created at 2024/12/9
 """
 
@@ -34,30 +13,20 @@ from datetime import UTC, timedelta
 from datetime import datetime
 from pprint import pprint  # NOQA
 
-import pandas as pd
 from objprint import op  # NOQA
-from sqlalchemy import String, CHAR, Integer, Boolean, TIMESTAMP, func
+from sqlalchemy import String, CHAR, Integer, Boolean, TIMESTAMP
 from sqlalchemy import create_engine
-from sqlalchemy import or_  # NOQA
-from sqlalchemy import select, asc, text
+from sqlalchemy import func, case, or_, asc, select, text
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
 
 from utils import (
-    MultiSearch, ParamType, DataType, PassFailFlag, PyTestRecord,
-    get_params_from_sernum, get_params_from_uuttype,
-    get_params_from_machine, get_params_from_area
+    MultiSearchParams, ParamType, DataType, PassFailFlag, PyTestRecord,
+    FUNC_MAP
 )
 
 no_arg = object()
-
-FUNC_MAP = {
-    'sernum': get_params_from_sernum,
-    'uuttype': get_params_from_uuttype,
-    'machine': get_params_from_machine,
-    'area': get_params_from_area,
-}
 
 PASSFAIL_MAP = {
     PassFailFlag.Start: 'S',
@@ -281,7 +250,7 @@ def get_test_record(front_dict: dict, engine=None):
     session = Session(engine)
 
     try:
-        m_obj = MultiSearch.model_validate(front_dict)
+        m_obj = MultiSearchParams.model_validate(front_dict)
     except Exception as e:
         print(e)
         raise ParamException(e)
@@ -362,27 +331,45 @@ def get_test_yield(front_dict: dict, engine=None):
 
     session = Session(engine)
 
-    table_df = pd.read_sql_table(
-        TestRecord.__tablename__, con=engine,
-        columns=[
-            'record_time',
-            'sernum',
-            'uuttype',
-            'area',
-            'passfail',
-            'first_pass'
-        ]
-    )
-    table_df['first_pass'] = table_df['first_pass'].map({'T': True, 'F': False})
-
-    print(table_df)
-    print(table_df.dtypes)
-
     # try:
     #     m_obj = YieldParams.model_validate(front_dict)
     # except Exception as e:
     #     print(e)
     #     raise ParamException(e)
+
+    unique_sernum = (
+        select(
+            TestRecord.uuttype,
+            func.count(func.distinct(TestRecord.sernum)).label('total_qty')).
+        where(TestRecord.passfail.in_(['P', 'F'])).
+        group_by(TestRecord.uuttype).
+        cte('unique_sernum')
+    )
+
+    pass_fail_stats = (
+        select(
+            TestRecord.uuttype,
+            TestRecord.area,
+            func.sum(case((TestRecord.passfail == 'P', 1), else_=0)).label('passed_cnt'),
+            func.sum(case((TestRecord.passfail == 'F', 1), else_=0)).label('failed_cnt'),
+            func.sum(case((TestRecord.passfail.in_(['P', 'F']), 1), else_=0)).label('total_cnt')).
+        where(TestRecord.passfail.in_(['P', 'F'])).
+        group_by(TestRecord.uuttype, TestRecord.area).
+        cte('pass_fail_stats')
+    )
+
+    final_sql = select(
+        pass_fail_stats.c.uuttype,
+        pass_fail_stats.c.area,
+        unique_sernum.c.total_qty,
+        pass_fail_stats.c.passed_cnt,
+        pass_fail_stats.c.failed_cnt,
+        pass_fail_stats.c.total_cnt,
+    ).join(unique_sernum, pass_fail_stats.c.uuttype == unique_sernum.c.uuttype)
+
+    result = session.execute(final_sql)
+    for row in result:
+        print(row)
 
 
 if __name__ == '__main__':
@@ -390,15 +377,4 @@ if __name__ == '__main__':
     # compute_first_pass()
 
     # get_test_record_by_sernum('FCW2845Y0P3')
-
-    # data1 = dict(
-    #     # sernum='',
-    #     uuttype='IE-3500-8P3S-%',
-    #     start_date='2024-11-20',
-    #     end_date='2024-12-12',
-    #     data_type='test_yield',
-    #     passfail=PassFailFlag.Fail | PassFailFlag.Pass,
-    # )
-    # get_test_record(data1)
-
-    get_test_yield(dict())
+    get_test_yield({})

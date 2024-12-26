@@ -89,6 +89,13 @@ get_params_from_uuttype = partial(get_params_from_value, param_pattern=PATTERN_P
 get_params_from_machine = partial(get_params_from_value, param_pattern=PATTERN_MACHINE)
 get_params_from_area = partial(get_params_from_value, param_pattern=PATTERN_AREA)
 
+FUNC_MAP = {
+    'sernum': get_params_from_sernum,
+    'uuttype': get_params_from_uuttype,
+    'machine': get_params_from_machine,
+    'area': get_params_from_area,
+}
+
 
 class DataType(Enum):
     """
@@ -103,9 +110,9 @@ class DataType(Enum):
 
 
 class ViewType(Enum):
-    NoDate = auto()
-    Week = auto()
-    Month = auto()
+    NoDate = 'no_date'
+    Week = 'week'
+    Month = 'month'
 
 
 class PassFailFlag(IntFlag):
@@ -168,7 +175,7 @@ class YieldParams(BaseModel):
         return self
 
 
-class MultiSearch(BaseModel):
+class MultiSearchParams(BaseModel):
     # support %
     sernum: Optional[str] = None
     uuttype: Optional[str] = None
@@ -211,7 +218,7 @@ if __name__ == '__main__':
         passfail=PassFailFlag.Fail,
     )
 
-    obj1 = MultiSearch.model_validate(data1)
+    obj1 = MultiSearchParams.model_validate(data1)
     # print(obj1.passfail)
     # print(obj1.passfail.__repr__())
     #
