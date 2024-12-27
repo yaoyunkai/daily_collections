@@ -25,7 +25,7 @@ Enum:
 created at 2024/12/12
 """
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from enum import Enum, IntFlag, auto
 from functools import partial
 from re import Pattern
@@ -95,6 +95,19 @@ FUNC_MAP = {
     'machine': get_params_from_machine,
     'area': get_params_from_area,
 }
+
+
+def convert_to_first_day(datetime_object: datetime, view_type: 'ViewType'):
+    if view_type is ViewType.NoDate:
+        # return datetime_object.date()
+        return date(2000, 1, 1)
+    if view_type is ViewType.Week:
+        days_diff = datetime_object.weekday()
+        return datetime_object.date() - timedelta(days_diff)
+    if view_type is ViewType.Month:
+        return datetime_object.date().replace(day=1)
+
+    raise ValueError(f'invalid view_type {view_type}')
 
 
 class DataType(Enum):

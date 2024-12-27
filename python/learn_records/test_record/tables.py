@@ -13,17 +13,21 @@ from datetime import UTC, timedelta
 from datetime import datetime
 from pprint import pprint  # NOQA
 
+import pandas as pd
 from objprint import op  # NOQA
 from sqlalchemy import String, CHAR, Integer, Boolean, TIMESTAMP
 from sqlalchemy import create_engine
-from sqlalchemy import func, case, or_, asc, select, text
+from sqlalchemy import func, or_, asc, select, text
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
 
+from daily_collections.python.learn_records.test_record.utils import ViewType
 from utils import (
-    MultiSearchParams, ParamType, DataType, PassFailFlag, PyTestRecord,
-    FUNC_MAP
+    MultiSearchParams, YieldParams,
+    ParamType, DataType, PassFailFlag, PyTestRecord,
+    FUNC_MAP,
+    convert_to_first_day,
 )
 
 no_arg = object()
@@ -317,59 +321,174 @@ def get_test_record(front_dict: dict, engine=None):
     return _final_results
 
 
-def get_test_yield(front_dict: dict, engine=None):
-    """
-    use pandas for compute yield / sql compute yield
-
-    two actions:
-        query   data
-        analyse data
-
-    """
+def get_test_yield_pandas(front_dict: dict, engine=None):
     if engine is None:
         engine = get_db_connection()
 
     session = Session(engine)
 
-    # try:
-    #     m_obj = YieldParams.model_validate(front_dict)
-    # except Exception as e:
-    #     print(e)
-    #     raise ParamException(e)
+    try:
+        m_obj = YieldParams.model_validate(front_dict)
+    except Exception as e:
+        print(e)
+        raise ParamException(e)
 
-    unique_sernum = (
-        select(
-            TestRecord.uuttype,
-            func.count(func.distinct(TestRecord.sernum)).label('total_qty')).
-        where(TestRecord.passfail.in_(['P', 'F'])).
-        group_by(TestRecord.uuttype).
-        cte('unique_sernum')
+    _sql_condition_list = []
+
+    # 1. 处理 sernum, uuttype, machine, area
+    _param_list = []
+    for param_name in ['sernum', 'uuttype', 'machine', 'area']:
+        params = getattr(m_obj, param_name)
+        params = FUNC_MAP[param_name](params)
+        field_obj = getattr(TestRecord, param_name)
+
+        if len(params) > 0:
+            for param, param_type in params:
+                if param_type is ParamType.Normal:
+                    _param_list.append(
+                        field_obj == param
+                    )
+                if param_type is ParamType.FuzzyQ:
+                    _param_list.append(
+                        field_obj.like(param)
+                    )
+            _sql_condition_list.append(or_(*_param_list))
+            _param_list.clear()
+
+    _sql_condition_list.append(
+        TestRecord.record_time.between(
+            m_obj.start_date,
+            m_obj.end_date + timedelta(days=1)
+        )
     )
 
-    pass_fail_stats = (
-        select(
-            TestRecord.uuttype,
-            TestRecord.area,
-            func.sum(case((TestRecord.passfail == 'P', 1), else_=0)).label('passed_cnt'),
-            func.sum(case((TestRecord.passfail == 'F', 1), else_=0)).label('failed_cnt'),
-            func.sum(case((TestRecord.passfail.in_(['P', 'F']), 1), else_=0)).label('total_cnt')).
-        where(TestRecord.passfail.in_(['P', 'F'])).
-        group_by(TestRecord.uuttype, TestRecord.area).
-        cte('pass_fail_stats')
+    _sql_condition_list.append(
+        TestRecord.passfail.in_(['P', 'F'])
     )
 
-    final_sql = select(
-        pass_fail_stats.c.uuttype,
-        pass_fail_stats.c.area,
-        unique_sernum.c.total_qty,
-        pass_fail_stats.c.passed_cnt,
-        pass_fail_stats.c.failed_cnt,
-        pass_fail_stats.c.total_cnt,
-    ).join(unique_sernum, pass_fail_stats.c.uuttype == unique_sernum.c.uuttype)
+    if m_obj.yield_type is DataType.FPY:
+        _sql_condition_list.append(
+            TestRecord.first_pass == FPY_TRUE
+        )
 
-    result = session.execute(final_sql)
-    for row in result:
-        print(row)
+    view_type = m_obj.view_type
+    columns = ['record_time', 'sernum', 'uuttype', 'area', 'passfail', 'machine', 'date_at']
+
+    _final_sql = select(
+        TestRecord.record_time,
+        TestRecord.sernum,
+        TestRecord.uuttype,
+        TestRecord.area,
+        TestRecord.passfail,
+        TestRecord.machine,
+    ).where(*_sql_condition_list)
+
+    _result = []
+    dataset = session.execute(_final_sql)
+    for row in dataset:
+        row = list(row)
+        row.append(convert_to_first_day(row[0], view_type))
+        # op(row)
+        _result.append(row)
+
+    return compute_yield_with_pandas(_result, columns, m_obj)
+
+
+def compute_yield_with_pandas(dataset, columns, m_obj) -> list:
+    def count_pass(_x):
+        return (_x == 'P').sum()
+
+    def count_fail(_x):
+        return (_x == 'F').sum()
+
+    def count_total(_x):
+        # total_tests = ('passfail', 'count')
+        return _x.isin(['P', 'F']).sum()
+
+    def compute_ete(_df):
+        grouped = (
+            _df.groupby(['uuttype', 'date_at', 'sernum'])['passfail'].
+            apply(lambda x: (x == 'P').all()).
+            reset_index(name='all_passed')
+        )
+        passed_sernums = grouped[grouped['all_passed']]  # 掩码
+        result = passed_sernums.groupby(['uuttype', 'date_at']).size().reset_index(name='ETE_count')
+        return result
+
+    def compute_zzm_ete(_df):
+        return _df.groupby('sernum')['passfail'].apply(lambda x: (x == 'P').all()).sum()
+
+    original_df = pd.DataFrame(dataset, columns=columns)
+
+    # df['record_time'] = pd.to_datetime(df['record_time'])
+    original_df['date_at'] = pd.to_datetime(original_df['date_at'])
+    # print(df)
+    # print(df.dtypes)
+
+    yield_type = m_obj.yield_type
+    view_type = m_obj.view_type
+
+    # 总计数据查询
+    df_zzm_pass_fail_stats = original_df.groupby('area').agg(
+        pass_cnt=('passfail', count_pass),
+        fail_cnt=('passfail', count_fail),
+        total_cnt=('passfail', count_total)
+    ).reset_index()
+    int_total_qty = original_df['sernum'].nunique()
+
+    # pass & fail 个数统计, TODO 设置一个缓存的字典
+    df_pass_fail_stats = original_df.groupby(['uuttype', 'date_at', 'area']).agg(
+        pass_cnt=('passfail', count_pass),
+        fail_cnt=('passfail', count_fail),
+        total_cnt=('passfail', count_total)
+    ).reset_index()
+    print(df_pass_fail_stats)
+
+    # uuttype 按照日期分组的不重复sernum个数
+    df_unique_sernum_qty = original_df.groupby(['uuttype', 'date_at']).agg(
+        total_qty=('sernum', 'nunique')
+    ).reset_index()
+    print(df_unique_sernum_qty)
+
+    # set a default value
+    df_ete_stats = None
+    int_ete_count = 0
+
+    if yield_type is DataType.FPY:
+        df_ete_stats = compute_ete(original_df)
+        int_ete_count = compute_zzm_ete(original_df)
+
+    _final_result = list()
+    _zzm_dict = dict()
+    _zzm_dict['uuttype'] = 'ZZZ_SUMMARY'
+    _zzm_dict['date'] = None
+    _zzm_dict['board_qty'] = int_total_qty
+
+    _zzm_total_pass = 0
+    _zzm_total_fail = 0
+    _zzm_total_cnt = 0
+
+    for row in df_zzm_pass_fail_stats.itertuples():
+        area = row.area
+        _zzm_dict[f'passqty_{area}'] = row.pass_cnt
+        _zzm_dict[f'failqty_{area}'] = row.fail_cnt
+        _zzm_dict[f'totalqty_{area}'] = row.total_cnt
+        _zzm_dict[f'yield_{area}'] = round(row.pass_cnt / row.total_cnt, 4)
+
+        _zzm_total_cnt += row.total_cnt
+        _zzm_total_pass += row.pass_cnt
+        _zzm_total_fail += row.fail_cnt
+
+    _zzm_dict['avg_yield'] = round(_zzm_total_pass / _zzm_total_cnt, 4)
+
+    if yield_type is DataType.FPY:
+        _zzm_dict['ete_passqty'] = int_ete_count
+        _zzm_dict['ete_failqty'] = int_total_qty - int_ete_count
+        _zzm_dict['ete_totalqty'] = int_total_qty
+        _zzm_dict['ete_yield'] = round(int_ete_count / int_total_qty, 4)
+
+    # pprint(_zzm_dict)
+    _final_result.append(_zzm_dict)
 
 
 if __name__ == '__main__':
@@ -378,10 +497,11 @@ if __name__ == '__main__':
 
     _query = {
         'uuttype': 'IE-3500-%',
-        'start_date': '2024-12-01',
-        'end_date': '2024-12-20',
-        'data_type': 'test_yield',
-        'passfail': PassFailFlag.Fail,
+        'start_date': '2024-11-20',
+        'end_date': '2024-12-29',
+        'view_type': ViewType.NoDate.value,
+        'yield_type': DataType.FPY.value,
+        # 'passfail': PassFailFlag.Fail,
     }
 
-    get_test_record(_query)
+    get_test_yield_pandas(_query)
