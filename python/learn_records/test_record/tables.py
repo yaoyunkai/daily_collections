@@ -22,9 +22,8 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import Session
 
-from daily_collections.python.learn_records.test_record.utils import ViewType
 from utils import (
-    MultiSearchParams, YieldParams,
+    MultiSearchParams, YieldParams, ViewType,
     ParamType, DataType, PassFailFlag, PyTestRecord,
     FUNC_MAP,
     convert_to_first_day,
@@ -333,6 +332,12 @@ def get_test_yield_pandas(front_dict: dict, engine=None):
         print(e)
         raise ParamException(e)
 
+    print(f'view type is {m_obj.view_type}')
+    print(id(m_obj.view_type))
+    print(id(ViewType.NoDate))
+    print(id(ViewType.Week))
+    print(id(ViewType.Month))
+
     _sql_condition_list = []
 
     # 1. 处理 sernum, uuttype, machine, area
@@ -387,6 +392,7 @@ def get_test_yield_pandas(front_dict: dict, engine=None):
     dataset = session.execute(_final_sql)
     for row in dataset:
         row = list(row)
+        # TODO use sql
         row.append(convert_to_first_day(row[0], view_type))
         # op(row)
         _result.append(row)
@@ -436,18 +442,20 @@ def compute_yield_with_pandas(dataset, columns, m_obj) -> list:
     ).reset_index()
     int_total_qty = original_df['sernum'].nunique()
 
-    # pass & fail 个数统计, TODO 设置一个缓存的字典
+    # pass & fail 个数统计
     df_pass_fail_stats = original_df.groupby(['uuttype', 'date_at', 'area']).agg(
         pass_cnt=('passfail', count_pass),
         fail_cnt=('passfail', count_fail),
         total_cnt=('passfail', count_total)
     ).reset_index()
+
     print(df_pass_fail_stats)
 
     # uuttype 按照日期分组的不重复sernum个数
     df_unique_sernum_qty = original_df.groupby(['uuttype', 'date_at']).agg(
         total_qty=('sernum', 'nunique')
     ).reset_index()
+
     print(df_unique_sernum_qty)
 
     # set a default value
@@ -487,8 +495,50 @@ def compute_yield_with_pandas(dataset, columns, m_obj) -> list:
         _zzm_dict['ete_totalqty'] = int_total_qty
         _zzm_dict['ete_yield'] = round(int_ete_count / int_total_qty, 4)
 
-    # pprint(_zzm_dict)
+    _cache_dict = dict()
+    for row in df_pass_fail_stats.itertuples():
+        area = row.area
+        # print(type(row.date_at))
+        _uuttype_date_at = f'{row.uuttype}_{row.date_at}'
+        if _uuttype_date_at not in _cache_dict:
+            _cache_dict[_uuttype_date_at] = dict()
+        _cache_dict[_uuttype_date_at]['uuttype'] = row.uuttype
+        _cache_dict[_uuttype_date_at]['date'] = row.date_at
+
+        _cache_dict[_uuttype_date_at][f'passqty_{area}'] = row.pass_cnt
+        _cache_dict[_uuttype_date_at][f'failqty_{area}'] = row.fail_cnt
+        _cache_dict[_uuttype_date_at][f'totalqty_{area}'] = row.total_cnt
+        _cache_dict[_uuttype_date_at][f'yield_{area}'] = round(row.pass_cnt / row.total_cnt, 4)
+
+    for row in df_unique_sernum_qty.itertuples():
+        _uuttype_date_at = f'{row.uuttype}_{row.date_at}'
+        if _uuttype_date_at not in _cache_dict:
+            print('data missed from unique sernum')
+            continue
+        _cache_dict[_uuttype_date_at]['board_qty'] = row.total_qty
+
+    if yield_type is DataType.FPY:
+        for row in df_ete_stats.itertuples():
+            _uuttype_date_at = f'{row.uuttype}_{row.date_at}'
+            if _uuttype_date_at not in _cache_dict:
+                print('data missed from ETE pass fail')
+                continue
+            _cache_dict[_uuttype_date_at]['ete_passqty'] = row.ETE_count
+            _cache_dict[_uuttype_date_at]['ete_failqty'] = _cache_dict[_uuttype_date_at]['board_qty'] - row.ETE_count
+            _cache_dict[_uuttype_date_at]['ete_totalqty'] = _cache_dict[_uuttype_date_at]['board_qty']
+            _cache_dict[_uuttype_date_at]['ete_yield'] = round(
+                row.ETE_count / _cache_dict[_uuttype_date_at]['board_qty'], 4)
+
+    print(view_type)
+    for _yield_dict in _cache_dict:
+
+        if view_type is ViewType.NoDate:
+            _cache_dict[_yield_dict]['date'] = None
+        _final_result.append(_cache_dict[_yield_dict])
+
     _final_result.append(_zzm_dict)
+    pprint(_final_result)
+    return _final_result
 
 
 if __name__ == '__main__':
