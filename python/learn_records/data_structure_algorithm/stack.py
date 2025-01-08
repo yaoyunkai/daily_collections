@@ -87,6 +87,21 @@ def dec_to_str(val: int, *, base=2):
     return result
 
 
+prec = {
+    '*': 3,
+    '/': 3,
+    '+': 2,
+    '-': 2,
+    '(': 1,
+}
+
+
+def infix_to_postfix(infix_expr: str):
+    op_stack = Stack()
+    postfix_list = []
+    token_list = infix_expr.split()
+
+
 if __name__ == '__main__':
     rr = dec_to_str(31, base=15)
     print(rr)
