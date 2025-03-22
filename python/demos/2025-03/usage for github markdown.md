@@ -79,7 +79,32 @@ this is  asd ss\wasdfasfd
 
 
 
+<details>
+
+<summary>Tips for collapsed sections</summary>
+
+### You can add a header
+
+You can add text within a collapsed section.
+
+You can add an image or a code block, too.
+
+```ruby
+   puts "Hello World"
+```
+
+</details>
+
+
+
 ---
+
+<picture>
+  <source
+    srcset="https://fdbf26f7-6ec8-4bf6-82f8-7d1d165744fd.mdnplay.dev/shared-assets/images/examples/surfer.jpg"
+    media="(orientation: portrait)" />
+  <img src="https://fdbf26f7-6ec8-4bf6-82f8-7d1d165744fd.mdnplay.dev/shared-assets/images/examples/surfer.jpg" alt="" />
+</picture>
 
 
 
