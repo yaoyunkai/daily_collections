@@ -36,17 +36,19 @@ def compute_pi_chudnovsky(precision):
         K += 12
 
     # 计算最终 π 值
-    pi = C / S
+    _pi = C / S
 
     # 重置精度为目标精度并返回结果
     getcontext().prec = precision + 1  # 1位整数 + 100位小数
-    return +pi  # 触发舍入
+    return +_pi  # 触发舍入
 
 
 if __name__ == '__main__':
     # 计算小数点后100位
-    pi = compute_pi_chudnovsky(100)
+    LEN = 100
+
+    pi = compute_pi_chudnovsky(LEN)
     pi_str = str(pi)
-    decimal_part = pi_str.split('.')[1][:100]
+    decimal_part = pi_str.split('.')[1][:LEN]
 
     print(f"圆周率的小数点后100位是：\n{decimal_part}")
