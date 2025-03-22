@@ -112,31 +112,24 @@ You can add an image or a code block, too.
 
 这是一个内联公式: $\frac{1}{\pi}=12 \sum_{k=0}^{\infty} \frac{(-1)^{k}(6 k)!(13591409+545140134 k)}{(3 k)!(k!)^{3} \cdot 640320^{3 k+3 / 2}}$
 
+$\sqrt{3x-1}+(1+x)^2$
+
+---
 
 
-```geojson
-{
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "id": 1,
-      "properties": {
-        "ID": 0
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-              [-90,35],
-              [-90,30],
-              [-85,30],
-              [-85,35],
-              [-90,35]
-          ]
-        ]
-      }
-    }
-  ]
-}
+
+**The Cauchy-Schwarz Inequality**\
+$$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
+
+---
+
+
+
+**The Cauchy-Schwarz Inequality**
+
+```math
+\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)
 ```
+
+---
+
