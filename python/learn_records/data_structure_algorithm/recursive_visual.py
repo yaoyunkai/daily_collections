@@ -5,7 +5,7 @@ turtle package
 
 created at 2025/4/9
 """
-from turtle import *
+from turtle import Turtle, exitonclick
 
 my_turtle = Turtle()
 
@@ -28,9 +28,7 @@ def tree(branch_len, t: Turtle):
         t.backward(branch_len)
 
 
-if __name__ == '__main__':
-    # draw_spiral(my_turtle, 100)
-
+def draw_tree():
     my_turtle.left(90)
     my_turtle.up()
     my_turtle.backward(300)
@@ -38,5 +36,43 @@ if __name__ == '__main__':
     my_turtle.color('green')
     tree(110, my_turtle)
 
+
+def draw_triangle(points, color, t: Turtle):
+    t.fillcolor(color)
+    t.up()
+    t.goto(points[0])
+    t.down()
+    t.begin_fill()
+    t.goto(points[1])
+    t.goto(points[2])
+    t.goto(points[0])
+    t.end_fill()
+
+
+def get_mid(p1, p2):
+    return (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
+
+
+def sierpinski(points, degree, t: Turtle):
+    colormap = ['blue', 'red', 'green', 'white', 'yellow', 'violet', 'orange']
+    draw_triangle(points, colormap[degree], t)
+
+    if degree > 0:
+        sierpinski([points[0], get_mid(points[0], points[1]), get_mid(points[0], points[2])], degree - 1, t)
+        sierpinski([points[1], get_mid(points[0], points[1]), get_mid(points[1], points[2])], degree - 1, t)
+        sierpinski([points[2], get_mid(points[2], points[1]), get_mid(points[0], points[2])], degree - 1, t)
+
+
+def draw_final():
+    my_points = [(-500, -250), (0, 500), (500, -250)]
+    sierpinski(my_points, 5, my_turtle)
+
+
+if __name__ == '__main__':
+    # draw_spiral(my_turtle, 100)
+
+    # draw_tree()
+
+    draw_final()
     # 等待用户点击后关闭窗口
     exitonclick()
