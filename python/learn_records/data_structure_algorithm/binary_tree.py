@@ -70,6 +70,27 @@ class BinaryTree:
         print(_pretty(self))
 
 
+def pre_order(tree: BinaryTree):
+    if tree:
+        print(tree.get_root_val())
+        pre_order(tree.get_left_child())
+        pre_order(tree.get_right_child())
+
+
+def post_order(tree: BinaryTree):
+    if tree:
+        post_order(tree.get_left_child())
+        post_order(tree.get_right_child())
+        print(tree.get_root_val())
+
+
+def in_order(tree: BinaryTree):
+    if tree:
+        in_order(tree.get_left_child())
+        print(tree.get_root_val())
+        in_order(tree.get_right_child())
+
+
 if __name__ == '__main__':
     # 构建示例二叉树
     root = BinaryTree('A')
@@ -82,3 +103,6 @@ if __name__ == '__main__':
 
     # 打印树结构
     root.pretty_print()
+
+    # pre_order(root)
+    post_order(root)
