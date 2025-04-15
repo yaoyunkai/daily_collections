@@ -88,8 +88,6 @@ if __name__ == '__main__':
     pq.insert(13)
 
     print(pq._pq)
-    pq.delete_min()
-    print(pq._pq)
 
     pq2 = PriorityQueue()
     list2 = [5, 1, 4, 6, 8, 2, 0, 3, 7, 10, -5, -9, 13]

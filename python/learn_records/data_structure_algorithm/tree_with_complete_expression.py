@@ -6,6 +6,7 @@
 created at 2025/4/14
 """
 import operator
+import pprint
 
 from binary_tree import BinaryTree
 from stack import Stack
@@ -45,7 +46,7 @@ def build_parse_tree(fpexp: str):
     return e_tree
 
 
-def tokenize(fp_exp: str):
+def tokenize_old(fp_exp: str):
     tokens = []
     current_token = ""
     # 将表达式拆分为 token（处理多位数和运算符）
@@ -64,6 +65,84 @@ def tokenize(fp_exp: str):
     if current_token:
         tokens.append(current_token)
 
+    return tokens
+
+
+def tokenize(expression):
+    tokens = []
+    i = 0
+    n = len(expression)
+
+    while i < n:
+        c = expression[i]
+        if c.isspace():
+            i += 1
+            continue
+        elif c in '()':
+            tokens.append({'type': 'PAREN', 'value': c})
+            i += 1
+        elif c in '+-*/':
+            # 检查是否是可能的一元运算符符号
+            if c in '+-':
+                prev_token = tokens[-1] if tokens else None
+                if (prev_token is None or
+                        (prev_token['type'] == 'PAREN' and prev_token['value'] == '(') or
+                        prev_token['type'] == 'OP'):
+                    # 检查后面是否有数字或小数点
+                    if i + 1 < n and (expression[i + 1].isdigit() or expression[i + 1] == '.'):
+                        # 收集符号和数字部分
+                        num_str = c
+                        i += 1
+                        has_dot = False
+                        while i < n:
+                            current_char = expression[i]
+                            if current_char.isdigit():
+                                num_str += current_char
+                                i += 1
+                            elif current_char == '.' and not has_dot:
+                                num_str += '.'
+                                has_dot = True
+                                i += 1
+                            elif current_char == '.' and has_dot:
+                                # 第二个小数点，停止收集
+                                break
+                            else:
+                                break
+                        # 验证是否为有效数字
+                        try:
+                            value = float(num_str)
+                            tokens.append({'type': 'NUMBER', 'value': value})
+                        except ValueError:
+                            raise ValueError(f"Invalid number format: {num_str}")
+                        continue  # 继续外层循环，避免重复处理i
+            # 如果不是一元符号或无法合并，则作为运算符
+            tokens.append({'type': 'OP', 'value': c})
+            i += 1
+        elif c.isdigit() or c == '.':
+            # 收集数字部分（无符号）
+            num_str = ''
+            has_dot = False
+            while i < n and (expression[i].isdigit() or expression[i] == '.'):
+                current_char = expression[i]
+                if current_char == '.':
+                    if has_dot:
+                        break  # 遇到第二个小数点，停止收集
+                    has_dot = True
+                num_str += current_char
+                i += 1
+            # 验证数字有效性
+            if num_str == '.' or (num_str.startswith('.') and len(num_str) == 1):
+                raise ValueError(f"Invalid number: {num_str}")
+            try:
+                if has_dot or '.' in num_str:
+                    value = float(num_str)
+                else:
+                    value = int(num_str)
+                tokens.append({'type': 'NUMBER', 'value': value})
+            except ValueError:
+                raise ValueError(f"Invalid number: {num_str}")
+        else:
+            raise ValueError(f"Invalid character: {c}")
     return tokens
 
 
@@ -236,3 +315,6 @@ if __name__ == '__main__':
     print(post_order_eval(obj1))
 
     print(print_fp_exp(obj1))
+
+    pprint.pprint(tokenize(exp4))
+    pprint.pprint(tokenize("1.23 + 3.4"))
