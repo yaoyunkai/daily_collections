@@ -1,0 +1,16 @@
+graph {
+node[shape=circle, style=filled, fixedsize=true, width=0.3, fontsize="10pt"]
+0 -- 6
+0 -- 2
+0 -- 1
+0 -- 5
+3 -- 5
+3 -- 4
+4 -- 5
+4 -- 6
+7 -- 8
+9 -- 11
+9 -- 10
+9 -- 12
+11 -- 12
+}

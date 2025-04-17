@@ -28,6 +28,7 @@
 
 created at 2025/4/16
 """
+from utils import count_digits
 
 
 class BagIterator:
@@ -84,7 +85,7 @@ class Bag:
 class Graph:
     V = 0  # 顶点数
     E = 0  # 边的数量
-    adj = None  # 接邻表
+    adj: list[Bag] = None  # 接邻表
 
     @classmethod
     def create_graph_from_vertices(cls, v: int):
@@ -96,7 +97,7 @@ class Graph:
         obj.adj = list()
 
         for i in range(obj.V):
-            obj.adj.append(list())
+            obj.adj.append(Bag())
 
         return obj
 
@@ -111,7 +112,7 @@ class Graph:
 
             obj.adj = list()
             for i in range(obj.V):
-                obj.adj.append(list())
+                obj.adj.append(Bag())
 
             lines = int(fp.readline())
 
@@ -133,11 +134,54 @@ class Graph:
         self._validate_vertex(v)
         self._validate_vertex(w)
         self.E += 1
-        self.adj[v].append(w)
-        self.adj[w].append(v)
+        self.adj[v].add(w)
+        self.adj[w].add(v)
 
-    # def __str__(self):
-    #     string = f'{self.V} vertices, {self.E} edges \n'
+    def degree(self, v):
+        self._validate_vertex(v)
+        return self.adj[v].size()
+
+    def max_degree(self) -> int:
+        max_d = 0
+        for v in range(self.V):
+            max_d = max(max_d, self.degree(v))
+        return max_d
+
+    def avg_degree(self):
+        return 2 * self.E / self.V
+
+    def __str__(self):
+        exp = '{0:%sd}: ' % (count_digits(self.V))
+
+        string = f'{self.V} vertices, {self.E} edges \n'
+        for i in range(self.V):
+            string += exp.format(i)
+            string += ' '.join([str(item) for item in self.adj[i]])
+            string += '\n'
+
+        return string
+
+    def to_dot(self):
+        str_list = list()
+        str_list.append('graph {')
+        str_list.append('\n')
+        str_list.append("node[shape=circle, style=filled, fixedsize=true, width=0.3, fontsize=\"10pt\"]")
+        str_list.append('\n')
+
+        self_loops = 0
+
+        for i in range(self.V):
+            for item in self.adj[i]:
+                if i < item:
+                    str_list.append(f'{i} -- {item}\n')
+                elif i == item:
+                    if self_loops % 2 == 0:
+                        str_list.append(f'{i} -- {item}\n')
+                    self_loops += 1
+
+        str_list.append('}\n')
+
+        return ''.join(str_list)
 
 
 if __name__ == '__main__':
