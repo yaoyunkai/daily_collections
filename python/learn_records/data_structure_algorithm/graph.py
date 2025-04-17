@@ -29,3 +29,118 @@
 created at 2025/4/16
 """
 
+
+class BagIterator:
+    def __init__(self, start):
+        self.start = start
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if not self.start:
+            raise StopIteration
+        _item = self.start.value
+        self.start = self.start.next
+        return _item
+
+
+class BagNode:
+    def __init__(self, value):
+        self.value = value
+        self.next = None
+
+
+class Bag:
+    def __init__(self):
+        self.first = None
+        self.n = 0
+
+    def __iter__(self):
+        return BagIterator(self.first)
+
+    def is_empty(self):
+        return self.first is None
+
+    def size(self):
+        return self.n
+
+    def add(self, item):
+        old = self.first
+        new_node = BagNode(item)
+        new_node.next = old
+        self.first = new_node
+        self.n += 1
+
+    def search(self, item):
+        cur: BagNode = self.first
+        while cur is not None:
+            if cur.value == item:
+                return True
+            cur = cur.next
+        return False
+
+
+class Graph:
+    V = 0  # 顶点数
+    E = 0  # 边的数量
+    adj = None  # 接邻表
+
+    @classmethod
+    def create_graph_from_vertices(cls, v: int):
+        if v < 0:
+            raise ValueError('Number of vertices must be non-negative')
+        obj = cls()
+        obj.V = v
+        obj.E = 0
+        obj.adj = list()
+
+        for i in range(obj.V):
+            obj.adj.append(list())
+
+        return obj
+
+    @classmethod
+    def create_graph_from_text(cls, filename) -> 'Graph':
+        obj = cls()
+
+        with open(filename, mode='r', encoding='utf8') as fp:
+            obj.V = int(fp.readline())
+            if obj.V < 0:
+                raise ValueError('Number of vertices must be non-negative')
+
+            obj.adj = list()
+            for i in range(obj.V):
+                obj.adj.append(list())
+
+            lines = int(fp.readline())
+
+            if obj.E < 0:
+                raise ValueError('number of edges in a Graph must be non-negative')
+
+            for i in range(lines):
+                _tmp = fp.readline().split()
+                left, right = int(_tmp[0]), int(_tmp[1])
+                obj.add_edge(left, right)
+
+        return obj
+
+    def _validate_vertex(self, value):
+        if not 0 <= value < self.V:
+            raise ValueError(f"vertex {value} is not between 0 and {self.V - 1}")
+
+    def add_edge(self, v, w):
+        self._validate_vertex(v)
+        self._validate_vertex(w)
+        self.E += 1
+        self.adj[v].append(w)
+        self.adj[w].append(v)
+
+    # def __str__(self):
+    #     string = f'{self.V} vertices, {self.E} edges \n'
+
+
+if __name__ == '__main__':
+    # graph = Graph.create_graph_from_vertices(10)
+    graph = Graph.create_graph_from_text('tinyG.txt')
+    print(graph)
