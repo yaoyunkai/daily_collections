@@ -126,6 +126,7 @@ class Application:
         """
         if len(self.current_play_cards) < 5:
             return False
+        return None
 
 
 if __name__ == '__main__':
