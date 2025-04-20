@@ -54,6 +54,8 @@ CHIP_MAPPING = {
     '2': 2,
 }
 
+_unset = object()
+
 
 class SuitType(StrEnum):
     Spade = 'spade'
