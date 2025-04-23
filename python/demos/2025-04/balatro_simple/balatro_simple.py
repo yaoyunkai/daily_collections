@@ -48,8 +48,7 @@ on_compute ->
 created at 2025/4/17
 """
 
-from enum import StrEnum
-from typing import Optional
+from enum import StrEnum, unique
 
 from utils import _print_noun
 
@@ -70,6 +69,7 @@ CHIP_MAPPING = {
 }
 
 
+@unique
 class DeckType(StrEnum):
     RedDeck = 'red_deck'  # 加一弃牌次数
     BlueDeck = 'blue_deck'  # 加一出牌次数
@@ -88,24 +88,33 @@ class DeckType(StrEnum):
     ErraticDeck = 'erratic_deck'
 
 
+@unique
 class SuitType(StrEnum):
-    Spade = 'spade'
-    Heart = 'heart'
-    Club = 'club'
-    Diamond = 'diamond'
+    """
+    继承自 str，成员值自动转换为字符串 。
+
+    """
+    Spade = 'spade'  # 黑桃
+    Heart = 'heart'  # 红桃
+    Club = 'club'  # 梅花
+    Diamond = 'diamond'  # 方片
 
 
+@unique
 class EnhancedType(StrEnum):
     """
     增强牌类型
 
     """
-    StoneCard = 'Stone'
+    Null = 'null'
+    StoneCard = 'Stone'  # 石头牌
     WildCard = 'Wild'
 
 
 class Card:
     """
+    游戏牌
+
     额外的位置记录 筹码
 
     suit:
@@ -126,10 +135,10 @@ class Card:
 
     """
 
-    def __init__(self, number: str, suit: SuitType, enhanced_type: Optional[EnhancedType] = None):
-        if number not in CHIP_MAPPING:
+    def __init__(self, rank: str, suit: SuitType, enhanced_type: EnhancedType = EnhancedType.Null):
+        if rank not in CHIP_MAPPING:
             raise ValueError('invalid number')
-        self.number = number
+        self.rank = rank
         self.suit = suit
         self.enhanced_type = enhanced_type
 
@@ -139,7 +148,7 @@ class Card:
         else:
             _prefix = 'Card'
 
-        return f'{_prefix} <{self.suit} of {self.number}>'
+        return f'{_prefix} <{self.suit} of {self.rank}>'
 
 
 class Application:
@@ -156,10 +165,12 @@ class Application:
         self.joker_slot = 5  # 当前总共的小丑栏位
         self.current_play_cards = []
 
-    def _compute_joker_flags(self):
-        for attr_name in self.__class__.__dict__:
-            if attr_name.startswith('flag_joker_'):
-                setattr(self, attr_name, False)
+    def reset_joker_flags(self):
+        """
+        每次有小丑牌变化时，调用这个方法
+
+        """
+        pass
 
     def set_deck_type(self, deck_type: DeckType):
         if self.deck_type:
@@ -177,23 +188,57 @@ class Application:
         print(f'choices {_print_noun("card", len(played_cards))} for start play')
         self.current_play_cards = played_cards
 
-    def _is_flush_five(self):
+    def _is_single_suite(self) -> bool:
         """
-        同花五条
+        判断是否符合同花规则, 如下小丑和增强牌对判断有影响
+
+        模糊小丑,
+        四指,
+        万能牌,
+
+        黑 红 梅 方
+        1  1  1  1
 
         """
-        if len(self.current_play_cards) < 5:
+
+        suit_bit_map = {
+            SuitType.Spade: 0b1000,
+            SuitType.Heart: 0b0100,
+            SuitType.Club: 0b0010,
+            SuitType.Diamond: 0b0001,
+        }
+
+        if len(self.current_play_cards) < 4:
             return False
 
-        first = self.current_play_cards[0]
+        suit_list = []
 
-        return None
+        for card in self.current_play_cards:
+            if card.enhanced_type is EnhancedType.WildCard:
+                suit_list.append(0b1111)
+                continue
+
+            # 模糊小丑
+            if self.flag_joker_smeared_joker:
+                if card.suit in [SuitType.Heart, SuitType.Diamond]:
+                    suit_list.append(0b0101)
+                else:
+                    suit_list.append(0b1010)
+            else:
+                suit_list.append(suit_bit_map[card.suit])
+
+        print(suit_list)
+        return False
 
 
 if __name__ == '__main__':
     c1 = Card('K', SuitType.Heart, EnhancedType.WildCard)
-    c2 = Card('K', SuitType.Diamond)
+    c2 = Card('5', SuitType.Diamond)
+    c3 = Card('7', SuitType.Diamond)
+    c4 = Card('3', SuitType.Diamond)
+    c5 = Card('2', SuitType.Spade)
 
     app = Application()
     app.set_deck_type(DeckType.PlasmaDeck)
-    app.compute_poker_hands([c1, c2])
+    app.flag_joker_smeared_joker = True
+    app.compute_poker_hands([c1, c2, c3, c4, c5])
