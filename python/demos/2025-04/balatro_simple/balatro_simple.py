@@ -50,7 +50,7 @@ created at 2025/4/17
 
 from enum import StrEnum, unique
 
-from utils import _print_noun
+from utils import IdGenerator, print_noun
 
 CHIP_MAPPING = {
     'A': 11,
@@ -106,7 +106,7 @@ class EnhancedType(StrEnum):
     增强牌类型
 
     """
-    Null = 'null'
+    Null = 'null'  # 没有增强类型
     StoneCard = 'Stone'  # 石头牌
     WildCard = 'Wild'
 
@@ -141,6 +141,8 @@ class Card:
         self.rank = rank
         self.suit = suit
         self.enhanced_type = enhanced_type
+        self.chips = CHIP_MAPPING[self.rank]  # 可以被小丑牌增加
+        self._id = IdGenerator.get_next_id()
 
     def __str__(self):
         if self.enhanced_type:
@@ -185,7 +187,7 @@ class Application:
         if not self.deck_type:
             raise SystemError('can\'t play without deck type')
 
-        print(f'choices {_print_noun("card", len(played_cards))} for start play')
+        print(f'choices {print_noun("card", len(played_cards))} for start play')
         self.current_play_cards = played_cards
 
     def _is_single_suite(self) -> bool:
