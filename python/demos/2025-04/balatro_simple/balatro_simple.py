@@ -47,7 +47,6 @@ on_compute ->
 
 created at 2025/4/17
 """
-
 from enum import StrEnum, unique
 
 from utils import IdGenerator, print_noun
@@ -107,8 +106,14 @@ class EnhancedType(StrEnum):
 
     """
     Null = 'null'  # 没有增强类型
-    StoneCard = 'Stone'  # 石头牌
-    WildCard = 'Wild'
+    StoneCard = 'Stone'  # 石头牌，50筹码 打出时总是计分
+    WildCard = 'Wild'  # 万能牌
+    BonusCard = 'Bonus'  # 奖励牌，加三十额外筹码
+    MultCard = 'Mult'  # 倍率牌，加4倍率
+    GlassCard = 'Glass'  # 玻璃牌，x2 倍率， 四分之一的机率摧毁这张牌
+    SteelCard = 'Steel'  # 留在手牌时 x1.5倍率
+    GoldCard = 'Gold'  # 黄金牌， 如果这张牌在回合结束时还在手里，就得 3 块
+    LuckyCard = 'Lucky'  # 幸运牌, 1/5 的几率获得+20 倍率，1/15 的机率赢得 20 块
 
 
 class Card:
@@ -138,19 +143,23 @@ class Card:
     def __init__(self, rank: str, suit: SuitType, enhanced_type: EnhancedType = EnhancedType.Null):
         if rank not in CHIP_MAPPING:
             raise ValueError('invalid number')
-        self.rank = rank
-        self.suit = suit
-        self.enhanced_type = enhanced_type
+        self.rank = rank  # 2 - A
+        self.suit = suit  # 花色
+        self.enhanced_type = enhanced_type  # 增强牌类型
         self.chips = CHIP_MAPPING[self.rank]  # 可以被小丑牌增加
+
         self._id = IdGenerator.get_next_id()
 
     def __str__(self):
-        if self.enhanced_type:
+        if self.enhanced_type is not EnhancedType.Null:
             _prefix = '{} Card'.format(self.enhanced_type)
         else:
             _prefix = 'Card'
 
-        return f'{_prefix} <{self.suit} of {self.rank}>'
+        return f'{_prefix}-{self._id} <{self.suit} of {self.rank}>'
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Application:
@@ -165,9 +174,13 @@ class Application:
         self.deck_type = None  # 牌组类型, 可能对计分方式有影响
         self.jokers = []
         self.joker_slot = 5  # 当前总共的小丑栏位
-        self.current_play_cards = []
 
-    def reset_joker_flags(self):
+        # non-permanent variables
+        self.cur_play_cards = []  # 当前打出的牌
+        self.cur_has_flush = False  # 当前是否包含同花
+        self.cur_flush_cards = []  # 当前的同花牌
+
+    def on_joker_changed(self):
         """
         每次有小丑牌变化时，调用这个方法
 
@@ -188,59 +201,86 @@ class Application:
             raise SystemError('can\'t play without deck type')
 
         print(f'choices {print_noun("card", len(played_cards))} for start play')
-        self.current_play_cards = played_cards
+        self.cur_play_cards = played_cards
 
-    def _is_single_suite(self) -> bool:
+        self._check_flush()
+        print(f'has flush: {self.cur_has_flush}')
+        print(f'flush: {self.cur_flush_cards}')
+
+    def _check_flush(self):
         """
         判断是否符合同花规则, 如下小丑和增强牌对判断有影响
+
+        cur_has_flush
+        cur_flush_cards
 
         模糊小丑,
         四指,
         万能牌,
 
-        黑 红 梅 方
-        1  1  1  1
-
         """
 
         suit_bit_map = {
-            SuitType.Spade: 0b1000,
-            SuitType.Heart: 0b0100,
-            SuitType.Club: 0b0010,
-            SuitType.Diamond: 0b0001,
+            SuitType.Spade: 0,
+            SuitType.Heart: 1,
+            SuitType.Club: 2,
+            SuitType.Diamond: 3,
         }
 
-        if len(self.current_play_cards) < 4:
-            return False
+        if len(self.cur_play_cards) < 4:
+            self.cur_has_flush = False
+            return
 
-        suit_list = []
+        # 黑 红 梅 方
+        flush_list = [[], [], [], []]
 
-        for card in self.current_play_cards:
+        for card in self.cur_play_cards:
+            if card.enhanced_type is EnhancedType.StoneCard:
+                continue
+
             if card.enhanced_type is EnhancedType.WildCard:
-                suit_list.append(0b1111)
+                flush_list[0].append(card)
+                flush_list[1].append(card)
+                flush_list[2].append(card)
+                flush_list[3].append(card)
                 continue
 
             # 模糊小丑
             if self.flag_joker_smeared_joker:
-                if card.suit in [SuitType.Heart, SuitType.Diamond]:
-                    suit_list.append(0b0101)
+                if card.suit is SuitType.Spade or card.suit is SuitType.Club:
+                    flush_list[0].append(card)
+                    flush_list[2].append(card)
                 else:
-                    suit_list.append(0b1010)
-            else:
-                suit_list.append(suit_bit_map[card.suit])
+                    flush_list[1].append(card)
+                    flush_list[3].append(card)
 
-        print(suit_list)
-        return False
+            else:
+                flush_list[suit_bit_map[card.suit]].append(card)
+
+        flush_cards = []
+
+        for flush in flush_list:
+            if len(flush) > len(flush_cards):
+                flush_cards = flush
+
+        minimum_length = 5 if not self.flag_joker_four_fingers else 4
+        if len(flush_cards) >= minimum_length:
+            self.cur_has_flush = True
+            self.cur_flush_cards = flush_cards
+        else:
+            self.cur_has_flush = False
+            self.cur_flush_cards = []
 
 
 if __name__ == '__main__':
     c1 = Card('K', SuitType.Heart, EnhancedType.WildCard)
-    c2 = Card('5', SuitType.Diamond)
-    c3 = Card('7', SuitType.Diamond)
-    c4 = Card('3', SuitType.Diamond)
+    c2 = Card('5', SuitType.Club)
+    c3 = Card('7', SuitType.Club)
+    c4 = Card('3', SuitType.Club)
     c5 = Card('2', SuitType.Spade)
 
     app = Application()
     app.set_deck_type(DeckType.PlasmaDeck)
     app.flag_joker_smeared_joker = True
+    app.flag_joker_four_fingers = False
     app.compute_poker_hands([c1, c2, c3, c4, c5])
