@@ -374,6 +374,6 @@ if __name__ == '__main__':
 
     app = Application()
     app.set_deck_type(DeckType.PlasmaDeck)
-    app.has_joker_smeared_joker = True
+    app.has_joker_smeared_joker = False
     app.has_joker_four_fingers = False
     app.compute_poker_hands([c1, c2, c3, c4, c5])
