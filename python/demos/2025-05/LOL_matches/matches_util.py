@@ -9,8 +9,9 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from dateutil import parser
-from sqlalchemy import BigInteger, Boolean, Integer, String, TIMESTAMP, create_engine
+from sqlalchemy import BigInteger, Boolean, Integer, String, TIMESTAMP
 from sqlalchemy import ForeignKey
+from sqlalchemy import create_engine
 from sqlalchemy import select
 from sqlalchemy import text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -112,7 +113,7 @@ def _get_datetime(val: str):
 
 class SQLHelper:
     def __init__(self):
-        self.engine = create_engine("postgresql://user1:user1@localhost/lol_match_records")
+        self.engine = create_engine("postgresql://user1:user1@localhost/lol_match_records", echo=True)
         self.game_id_list = None
         self.session = None
 
@@ -240,4 +241,3 @@ class SQLHelper:
 
 if __name__ == '__main__':
     app = SQLHelper()
-    # app.get_game_id_list()
