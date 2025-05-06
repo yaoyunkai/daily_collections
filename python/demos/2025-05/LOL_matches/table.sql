@@ -50,3 +50,14 @@ CREATE TABLE IF NOT EXISTS new_participants
     damage_total        INTEGER      NOT NULL,
     damage_taken        INTEGER      NOT NULL
 );
+
+
+/*
+Query SQLs
+
+*/
+
+select game_id, summoner_id, win
+from new_participants
+where game_id in (select game_id from new_participants where summoner_id = 4100826724)
+  and summoner_id != 4100826724

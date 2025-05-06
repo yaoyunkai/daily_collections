@@ -5,6 +5,7 @@ created at 2025/5/4
 """
 import json
 import os
+from collections import defaultdict
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -122,7 +123,7 @@ class SQLHelper:
             print(f'路径不存在，{dir_path}')
             return
 
-        self.get_game_id_list()
+        self.get_total_game_id()
         self.session = Session(self.engine)
 
         for _path in os.listdir(dir_path):
@@ -144,7 +145,7 @@ class SQLHelper:
         self.session.commit()
         self.session = None
 
-    def get_game_id_list(self):
+    def get_total_game_id(self):
         with Session(self.engine) as session:
             # 构造查询语句：SELECT game_id FROM new_matches
             stmt = select(NewMatch.game_id)
@@ -238,6 +239,37 @@ class SQLHelper:
             )
             obj_match.participants.append(obj_part)
 
+    def get_related_games(self, summoner_id: int):
+        """
+        查询和某个召唤师共同游戏的召唤师的次数
+
+        """
+        # 子查询：获取目标召唤师参与的所有比赛ID
+        subquery = select(NewParticipant.game_id).where(
+            NewParticipant.summoner_id == summoner_id
+        )
+
+        # 主查询：获取这些比赛中所有参与者的game_id, summoner_id, win
+        stmt = select(
+            NewParticipant.game_id,
+            NewParticipant.summoner_id,
+            NewParticipant.win
+        ).where(
+            NewParticipant.game_id.in_(subquery),
+            NewParticipant.summoner_id != summoner_id,
+        )
+        with Session(self.engine) as session:
+            result = session.execute(stmt).all()
+
+        # TODO heapq ???
+        related_summoners_win = defaultdict(list)
+        related_summoners_game = defaultdict(list)
+        for item in result:
+            game_id, sum_id, win_loss = item
+            related_summoners_win[sum_id].append(win_loss)
+            related_summoners_game[sum_id].append(game_id)
+
 
 if __name__ == '__main__':
     app = SQLHelper()
+    app.get_related_games(4100826724)
