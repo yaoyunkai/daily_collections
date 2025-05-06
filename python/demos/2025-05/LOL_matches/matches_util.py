@@ -95,7 +95,7 @@ class NewParticipant(Base):
     deaths: Mapped[int] = mapped_column(Integer, nullable=False, comment="死亡数")
     assists: Mapped[int] = mapped_column(Integer, nullable=False, comment="助攻数")
     gold_earned: Mapped[int] = mapped_column(Integer, nullable=False, comment="获得金钱")
-    damage_dtc: Mapped[int] = mapped_column(Integer, nullable=False, comment="对英雄造成的伤害")
+    damage_to_champions: Mapped[int] = mapped_column(Integer, nullable=False, comment="对英雄造成的伤害")
     damage_total: Mapped[int] = mapped_column(Integer, nullable=False, comment="总伤害输出")
     damage_taken: Mapped[int] = mapped_column(Integer, nullable=False, comment="承受总伤害")
 
@@ -232,7 +232,7 @@ class SQLHelper:
                 perk1_id=perk_list[1],
                 kills=k, deaths=d, assists=a,
                 gold_earned=gold_earned,
-                damage_dtc=damage_dtc,
+                damage_to_champions=damage_dtc,
                 damage_total=damage_total,
                 damage_taken=damage_taken,
             )
