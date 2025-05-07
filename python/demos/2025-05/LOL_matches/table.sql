@@ -57,7 +57,23 @@ Query SQLs
 
 */
 
-select game_id, summoner_id, win
+-- 查询和某个召唤师一起玩的次数最多的
+select summoner_id,
+       sum(case when win = false then 1 else 0 end) as loss_cnt,
+       sum(case when win = true then 1 else 0 end)  as win_cnt,
+       count(*)                                     as total_cnt
 from new_participants
 where game_id in (select game_id from new_participants where summoner_id = 4100826724)
   and summoner_id != 4100826724
+group by summoner_id
+order by total_cnt desc
+limit 20;
+
+
+-- 查询召唤师名称
+select nick
+from new_participants
+where summoner_id = 4100826724
+order by id
+limit 1;
+
