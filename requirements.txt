@@ -12,7 +12,6 @@ redis==5.2.*
 faker==33.1.*
 fastapi==0.115.*
 pydantic==2.10.*
-nltk==3.9.1
 mmh3==5.0.*
 hiredis==3.1.*
 chardet==5.2.0
