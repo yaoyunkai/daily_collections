@@ -1,9 +1,14 @@
 """
 
+生成器的方法
+    send
+    close
+
 
 Created at 2023/3/30
 """
 from collections import namedtuple
+from collections.abc import Generator
 
 Result = namedtuple("Result", 'count average')
 
@@ -24,7 +29,7 @@ def coroutine(func):
 
 
 @coroutine
-def averager():
+def averager() -> Generator[float, float, None]:
     total = 0.0
     count = 0
 
