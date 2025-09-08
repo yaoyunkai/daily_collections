@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<buses>
+    <bus>
+        <id>7574</id>
+        <route>147</route>
+
+        <color>#3300ff</color>
+        <revenue>true</revenue>
+        <direction>North Bound</direction>
+        <latitude>41.925682067871094</latitude>
+        <longitude>-87.63092803955078</longitude>
+        <pattern>2499</pattern>
+        <patternDirection>North Bound</patternDirection>
+        <run>P675</run>
+        <finalStop><![CDATA[Paulina & Howard Terminal]]></finalStop>
+        <operator>42493</operator>
+    </bus>
+
+    <bus>
+        <id>6842</id>
+        <route>81</route>
+
+        <color>#996633</color>
+        <revenue>true</revenue>
+        <direction>East Bound</direction>
+        <latitude>41.96847915649414</latitude>
+        <longitude>-87.71509087085724</longitude>
+        <pattern>1649</pattern>
+        <patternDirection>East Bound</patternDirection>
+        <run>F259</run>
+        <finalStop><![CDATA[Marine Drive & Wilson]]></finalStop>
+        <operator>40641</operator>
+    </bus>
+
+    <bus>
+        <id>1839</id>
+        <route>151</route>
+
+        <color>#cc3366</color>
+        <revenue>true</revenue>
+        <direction>North Bound</direction>
+        <latitude>41.90369679377629</latitude>
+        <longitude>-87.62504166823167</longitude>
+        <pattern>2879</pattern>
+        <patternDirection>North Bound</patternDirection>
+        <run>P020</run>
+        <finalStop><![CDATA[Clark & Arthur Terminal]]></finalStop>
+        <operator>3505</operator>
+    </bus>
+
+    <bus>
+        <id>1645</id>
+        <route>8</route>
+
+        <color>#3300ff</color>
+        <revenue>true</revenue>
+        <direction>South Bound</direction>
+        <latitude>41.79262449156563</latitude>
+        <longitude>-87.64511108398438</longitude>
+        <pattern>3627</pattern>
+        <patternDirection>South Bound</patternDirection>
+        <run>K824</run>
+        <finalStop><![CDATA[Halsted & 79th Street Terminal]]></finalStop>
+        <operator>33842</operator>
+    </bus>
+
+    <bus>
+        <id>1354</id>
+        <route>X20</route>
+
+        <color>#993333</color>
+        <revenue>true</revenue>
+        <direction>West Bound</direction>
+        <latitude>41.8807258605957</latitude>
+        <longitude>-87.73252516526442</longitude>
+        <pattern>3643</pattern>
+        <patternDirection>West Bound</patternDirection>
+        <run>5077</run>
+        <finalStop><![CDATA[Madison & Austin Terminal]]></finalStop>
+        <operator>44854</operator>
+    </bus>
+
+    <bus>
+        <id>4034</id>
+        <route>6</route>
+
+        <color>#ff0066</color>
+        <revenue>true</revenue>
+        <direction>North Bound</direction>
+        <latitude>41.7613279070173</latitude>
+        <longitude>-87.55787527901786</longitude>
+        <pattern>2619</pattern>
+        <patternDirection>North Bound</patternDirection>
+        <run>7818</run>
+        <finalStop><![CDATA[Wacker (Upper) & Columbus]]></finalStop>
+        <operator>40435</operator>
+    </bus>
+
+    <bus>
+        <id>6870</id>
+        <route>79</route>
+
+        <color>#9900cc</color>
+        <revenue>true</revenue>
+        <direction>West Bound</direction>
+        <latitude>41.75200271606445</latitude>
+        <longitude>-87.54673645019531</longitude>
+        <pattern>1612</pattern>
+        <patternDirection>East Bound</patternDirection>
+        <run>7923</run>
+        <finalStop><![CDATA[79th Street & Brandon]]></finalStop>
+        <operator>44701</operator>
+    </bus>
+
+    <bus>
+        <id>6137</id>
+        <route>X80</route>
+
+        <color>#006666</color>
+        <revenue>true</revenue>
+        <direction>West Bound</direction>
+        <latitude>41.95324333333333</latitude>
+        <longitude>-87.80911</longitude>
+        <pattern>3108</pattern>
+        <patternDirection>East Bound</patternDirection>
+        <run>F555</run>
+        <finalStop><![CDATA[Irving Park & Fremont]]></finalStop>
+        <operator>43377</operator>
+    </bus>
+
+    <bus>
+        <id>6597</id>
+        <route>50</route>
+
+        <color>#cc3300</color>
+        <revenue>true</revenue>
+        <direction>South Bound</direction>
+        <latitude>41.848769989013675</latitude>
+        <longitude>-87.67583099365234</longitude>
+        <pattern>1197</pattern>
+        <patternDirection>South Bound</patternDirection>
+        <run>A255</run>
+        <finalStop><![CDATA[35th/Archer Orange Line Station]]></finalStop>
+        <operator>50266</operator>
+    </bus>
+
+    <bus>
+        <id>1240</id>
+        <route>4</route>
+
+        <color>#cc3300</color>
+        <revenue>true</revenue>
+        <direction>South Bound</direction>
+        <latitude>41.79152478669819</latitude>
+        <longitude>-87.60618591308594</longitude>
+        <pattern>3061</pattern>
+        <patternDirection>South Bound</patternDirection>
+        <run>7323</run>
+        <finalStop><![CDATA[Cottage Grove & Burnside Terminal]]></finalStop>
+        <operator>33769</operator>
+    </bus>
+
+    <bus>
+        <id>512</id>
+        <route>39</route>
+
+        <color>#33ccff</color>
+        <revenue>true</revenue>
+        <direction>North Bound</direction>
+        <latitude>41.82295608520508</latitude>
+        <longitude>-87.68980407714844</longitude>
+        <pattern>2333</pattern>
+        <patternDirection>East Bound</patternDirection>
+        <run>A312</run>
+        <finalStop><![CDATA[Lake Park & 40th Street]]></finalStop>
+        <operator>28623</operator>
+    </bus>
+
+    <bus>
+        <id>537</id>
+        <route>81W</route>
+
+        <color>#ff0066</color>
+        <revenue>true</revenue>
+        <direction>East Bound</direction>
+        <latitude>41.96830368041992</latitude>
+        <longitude>-87.80151432958142</longitude>
+        <pattern>1652</pattern>
+        <patternDirection>East Bound</patternDirection>
+        <run>F442</run>
+        <finalStop><![CDATA[Jefferson Park Blue Line Station]]></finalStop>
+        <operator>2540</operator>
+    </bus>
+
+</buses>
