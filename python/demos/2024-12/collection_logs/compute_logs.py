@@ -19,6 +19,7 @@ Nov 30 16:47:45
 
 
 """
+
 import datetime
 import re
 
@@ -37,8 +38,7 @@ PATTERN_LOG = re.compile(
     r'iPhone ([a-zA-Z0-9().\-_]+)\[\d+\] <([a-zA-Z]+)>: '
 )
 
-engine = create_engine("mysql+mysqldb://root:password@localhost/sql_adv",
-                       pool_recycle=3600, echo=True)
+engine = create_engine("mysql+mysqldb://root:password@localhost/sql_adv", pool_recycle=3600, echo=True)
 
 
 class Base(DeclarativeBase):
@@ -61,10 +61,7 @@ def to_datetime(val: str):
     _day = int(val.split()[1])
     _month = MONTH_DESC.index(val.split()[0]) + 1
 
-    return datetime.datetime(
-        year=YEAR, month=_month, day=_day,
-        hour=_hour, minute=_minute, second=_second
-    )
+    return datetime.datetime(year=YEAR, month=_month, day=_day, hour=_hour, minute=_minute, second=_second)
 
 
 def collect_logs(log_path=None, saved=False):
@@ -92,7 +89,7 @@ def collect_logs(log_path=None, saved=False):
         next_match_res = PATTERN_LOG.search(content, end_pos)
         if next_match_res:
             next_start_pos = next_match_res.start()
-            log_content = content[end_pos: next_start_pos]
+            log_content = content[end_pos:next_start_pos]
             total_results.append([log_datetime, log_process, log_level, log_content])
             start_pos = next_start_pos
 
@@ -109,9 +106,7 @@ def collect_logs(log_path=None, saved=False):
     orm_objs = []
 
     for item in total_results:
-        orm_objs.append(
-            Logs(log_date=item[0], log_process=item[1], log_level=item[2], log_msg=item[3])
-        )
+        orm_objs.append(Logs(log_date=item[0], log_process=item[1], log_level=item[2], log_msg=item[3]))
 
     with Session(engine) as session:
         session.add_all(orm_objs)
