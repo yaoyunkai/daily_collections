@@ -5,6 +5,10 @@ all keys for music contents
 """
 
 
+class Schema(object):
+    pass
+
+
 class T:
     # db_id
     # db_create_time
