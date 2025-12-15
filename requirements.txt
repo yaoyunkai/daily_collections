@@ -27,3 +27,4 @@ python-dateutil
 antlr4-python3-runtime
 antlr4-tools
 black
+duckdb==1.4.*
