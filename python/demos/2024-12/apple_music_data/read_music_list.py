@@ -1,198 +1,61 @@
 """
 read music list
 
-Track ID           : personal track id
-Name               : 歌曲名称
-Artist             : 艺人
-Album Artist       : 专辑艺人
-Composer           : 作曲者      &  ,
-Explicit           : E标
-Compilation        : 专辑是多个艺人的歌曲合辑
-
-Album              : 专辑
-Genre              : 类型
-Kind               : 文件类型
-Size               : 文件大小
-Total Time         : 文件时长
-Disc Number        : 光盘编号
-Disc Count
-
-Track Number / Track Count  : 音轨
-Year                   : 发行年份
-BPM                    : ????  每分钟节拍数
-
-Date Modified          : 修改日期   UTC 时间
-Date Added             : 添加日期
-
-Bit Rate
-Sample Rate
-
-Play Count             : 播放次数
-Play Date UTC          : 上次播放时间   2024-01-07T15:15:59Z
-Skip Count
-Skip Date
-Release Date            : 1986-02-12T12:00:00Z
-Rating                   : 评分
-Album Rating              : 评分 5星制 100
-Album Rating Computed
-
-
-Loved              : 标记为喜欢
-Persistent ID
-
-Track Type         : 本地 或者 iCloud / Remote / File
-Apple Music        : 歌曲可用 ????
-
-
-Part Of Gapless Album      :    无间隙专辑
-Grouping                   :     归类 ?????
-Clean                      :     ???? 不知道什么意思
-
-'Protected',
-'Location',                : 本地文件地址
-'File Folder Count',
-'Library Folder Count'
-'Normalization',
-
-
-'Work',                       : 作品名称
-'Movement Number',              乐章 1/4
-'Movement Count',
-'Movement Name',                乐章名称
-
 
 """
 
-import datetime
-import plistlib
-from typing import Any
+import json
 
-from constants import T
 from objprint import op
 
-FILE = r"C:\Users\10524\Downloads\资料库.xml"
+import constants
+
+ITEM_KEY = 'Tracks'
+MUSIC_KEY = 'Apple Music'
 
 
-def convert_to_local_time(utc_time: datetime.datetime):
-    # local_tz = pytz.timezone('Asia/Shanghai')
-    #
-    # utc_time = utc_time.replace(tzinfo=pytz.utc)
-    # return utc_time.astimezone(local_tz)
+def print_all_keys(filepath):
+    with open(filepath, mode='rb') as fp:
+        content = json.load(fp)
 
-    return utc_time + datetime.timedelta(hours=8)
+    key_list = []
+    all_items = content['Tracks']
+
+    for k, v in all_items.items():
+        for kk, vv in v.items():
+            if kk not in key_list:
+                key_list.append(kk)
+    op(key_list)
 
 
-def read_file(filename: str):
-    with open(filename, mode="rb") as f:
-        data = plistlib.load(f)
+def load_apple_music_items(filepath):
+    with open(filepath, mode='r', encoding='utf8') as fp:
+        content = json.load(fp)
 
-    result_list = []
+    music_items = content[ITEM_KEY]
+    music_item_cnt = 0
 
-    attr_name_list = []
-    attr_value_list = []
-    for attr_name in vars(T):
-        if attr_name.startswith("_"):
+    result_items = []
+    schema_attrs = constants.get_schema_dict()
+
+    for _, music_item_dict in music_items.items():
+        if music_item_dict.get(MUSIC_KEY) is not True:
             continue
-        attr_name_list.append(attr_name)
-        attr_value_list.append(T.__dict__[attr_name])
+        music_item_cnt += 1
+        result_dict = {}
 
-    musics = data["Tracks"]
-    for trac_id, item in musics.items():
-        # print(f'start convert track id {trac_id}')
-        music_obj = T()
+        for attr_name, attr_value in schema_attrs.items():
+            value = music_item_dict.get(attr_value)
+            if value is None:
+                continue
+            result_dict[attr_name] = value
 
-        for idx, attr_name in enumerate(attr_name_list):
-            item_value: Any = item.get(attr_value_list[idx])
+        op(result_dict)
+        result_items.append(result_dict)
 
-            if attr_name in ["track_id", "persistent_id"]:
-                if item_value is None:
-                    raise ValueError("track_id or persistent_id is None")
-
-            # 处理 ，，， &
-            # composer 有可能为空
-            if attr_name in ["artist", "album_artist", "composer"]:
-                if item_value is None:
-                    item_value = ""
-                if "&" in item_value:
-                    item_value = item_value.replace("&", ",")
-                if "," in item_value:
-                    _tmp = item_value.split(",")
-                    item_value = ",".join([_s.strip() for _s in _tmp])
-
-            # 处理Bool类型, 如果为None设置为False
-            if attr_name in ["explicit", "compilation", "apple_music"]:
-                if item_value is None:
-                    item_value = False
-
-            if attr_name == "year":
-                if item_value is None:
-                    raise ValueError(f"track id:{trac_id} 的发布日期为空")
-            if attr_name == "release_date":
-                if item_value is None:
-                    raise ValueError(f"track id:{trac_id} 的发布日期为空")
-                item_value = datetime.date(
-                    item_value.year,
-                    item_value.month,
-                    item_value.day,
-                )
-
-            if attr_name in [
-                "disc_num",
-                "disc_cnt",
-                "track_num",
-                "track_cnt",
-                "movement_num",
-                "movement_cnt",
-            ]:
-                if item_value is None:
-                    item_value = 0
-
-            if attr_name in ["size", "total_time", "bit_rate", "sample_rate"]:
-                if item_value is None:
-                    item_value = 0
-
-            # UTC 时间 转换为当前时间
-            if attr_name in ["date_updated", "date_added"]:
-                if item_value is None:
-                    raise ValueError(f"track id:{trac_id} 的添加日期或者修改日期为空")
-                item_value = convert_to_local_time(item_value)
-
-            if attr_name in ["play_count", "skip_count"]:
-                if item_value is None:
-                    item_value = 0
-
-            if attr_name in ["play_date", "skip_date"]:
-                if item_value is not None:
-                    item_value = convert_to_local_time(item_value)
-
-            if attr_name == "rating":
-                if item_value is None:
-                    item_value = -1  # -1 意思没有打分
-                else:
-                    item_value = item_value // 20
-
-            if attr_name in ["loved", "disliked"]:
-                if item_value is None:
-                    item_value = ""
-                else:
-                    item_value = "1"
-            if attr_name in ["play_date", "skip_date"]:
-                if item_value is not None:
-                    item_value = convert_to_local_time(item_value)
-
-            if attr_name not in ["play_date", "skip_date"]:
-                if item_value is None:
-                    # print(f'将 track id:{trac_id} 的字段 {attr_name} 设置为 \'\' ')
-                    item_value = ""
-
-            setattr(music_obj, attr_name, item_value)
-
-        op(music_obj)
-        result_list.append(music_obj)
-
-    print(f"总共获取了{len(result_list)}个记录")
-    return result_list
+    return result_items
 
 
 if __name__ == "__main__":
-    read_file(FILE)
+    # print_all_keys(r'C:\code\Py311\demos\202512\demo.json')
+    load_apple_music_items(r'C:\code\Py311\demos\202512\demo.json')
