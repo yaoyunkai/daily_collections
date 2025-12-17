@@ -8,6 +8,7 @@ session.commit
 Identity Map
 
 """
+import enum
 from datetime import datetime
 
 from sqlalchemy import DateTime
@@ -36,6 +37,12 @@ class Demo1(Base):
     y: Mapped[int] = mapped_column(default=0)
 
 
+class FirstPassState(enum.IntEnum):
+    UNSET = -1
+    NOT_FIRST = 0
+    FIRST = 1
+
+
 class TestRecord(Base):
     """
     first_pass_flag: -1  means unset
@@ -51,7 +58,7 @@ class TestRecord(Base):
     __tablename__ = 'test_record'
     id: Mapped[int] = mapped_column(primary_key=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    first_pass_flag: Mapped[int] = mapped_column(Integer, server_default=text('-1'))
+    first_pass_flag: Mapped[FirstPassState] = mapped_column(Integer, server_default=text('-1'))
 
     tst_id: Mapped[str] = mapped_column(String(30))
     record_time: Mapped[datetime] = mapped_column(DateTime)
