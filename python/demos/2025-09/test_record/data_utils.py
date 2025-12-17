@@ -122,16 +122,11 @@ def update_first_pass_flags():
     )
     un_processed_list = session.scalars(un_processed_stmt).all()
     for row in un_processed_list:
-        record_time = row.record_time
-        sernum = row.sernum
-        area = row.test_area
-
         _tuple = (row.sernum, row.test_area)
         if _tuple not in processed_list:
             first_pass_flag = schema.FirstPassState.FIRST
         else:
             first_pass_flag = schema.FirstPassState.NOT_FIRST
-        print(f'db record ({row.id}) "{record_time} {sernum} {area}" first_pass flag is {first_pass_flag}')
         row.first_pass_flag = first_pass_flag
         processed_list.append(_tuple)
         session.add(row)
