@@ -26,6 +26,10 @@ DATABASE_URL = "postgresql+psycopg2://test1:test1@localhost:5432/demo1"
 engine = create_engine(DATABASE_URL, echo=True)
 
 
+class ParamException(BaseException):
+    pass
+
+
 class Base(DeclarativeBase):
     pass
 
