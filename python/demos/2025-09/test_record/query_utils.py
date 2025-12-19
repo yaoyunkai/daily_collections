@@ -87,8 +87,8 @@ class MultiSearchParams(BaseModel):
 
     @model_validator(mode='after')
     def check_model_fields(self) -> Self:
-        if is_blank(self.sernum) and is_blank(self.uuttype) and is_blank(self.test_machine) and is_blank(
-                self.test_area):
+        if (is_blank(self.sernum) and is_blank(self.uuttype) and
+                is_blank(self.test_machine) and is_blank(self.test_area)):
             raise ValueError('sernum & uuttype & test_machine & test_area: cannot all be empty')
 
         if self.start_date > self.end_date:
@@ -111,6 +111,31 @@ class MultiSearchParams(BaseModel):
         return _ret
 
 
+class YieldParams(BaseModel):
+    # support %
+    sernum: Optional[str] = None
+    uuttype: Optional[str] = None
+    test_machine: Optional[str] = None
+    test_area: Optional[str] = None
+
+    start_date: date
+    end_date: date
+
+    view_type: ViewType = ViewType.NO_DATE
+    yield_type: DataType = DataType.TEST
+
+    @model_validator(mode='after')
+    def check_model_fields(self) -> Self:
+        if (is_blank(self.sernum) and is_blank(self.uuttype) and
+                is_blank(self.test_machine) and is_blank(self.test_area)):
+            raise ValueError('sernum & uuttype & test_machine & test_area: cannot all be empty')
+
+        if self.start_date > self.end_date:
+            raise ValueError('start date must <= end date')
+
+        return self
+
+
 def get_test_record_by_sernum(sernum):
     session = Session(schema.engine)
 
@@ -128,17 +153,7 @@ def get_test_record_by_sernum(sernum):
     return _result
 
 
-def get_test_record_by_multisearch(value_dict):
-    session = Session(schema.engine)
-
-    try:
-        m_obj = MultiSearchParams.model_validate(value_dict)
-        passfail_flags = m_obj.get_passfail_flags()
-    except Exception as e:
-        raise schema.ParamException(e)
-
-    stmt_where_conditions = []
-
+def _get_part_of_where_conditions(condition_list, m_obj):
     for field_name in ['sernum', 'uuttype', 'test_machine', 'test_area']:
         m_obj_attr = getattr(m_obj, field_name)
         if not m_obj_attr:
@@ -157,17 +172,30 @@ def get_test_record_by_multisearch(value_dict):
         if not param_values:
             continue
         if len(param_values) == 1:
-            stmt_where_conditions.append(param_values[0])
+            condition_list.append(param_values[0])
         else:
-            stmt_where_conditions.append(or_(*param_values))
+            condition_list.append(or_(*param_values))
         param_values.clear()
 
     start_datetime = date_to_datetime(m_obj.start_date)
     end_datetime = date_to_datetime(m_obj.end_date) + relativedelta(seconds=24 * 60 * 60 - 1)
 
-    stmt_where_conditions.append(
+    condition_list.append(
         TestRecord.record_time.between(start_datetime, end_datetime)
     )
+
+
+def get_test_record_by_multisearch(value_dict):
+    session = Session(schema.engine)
+
+    try:
+        m_obj = MultiSearchParams.model_validate(value_dict)
+        passfail_flags = m_obj.get_passfail_flags()
+    except Exception as e:
+        raise schema.ParamException(e)
+
+    stmt_where_conditions = []
+    _get_part_of_where_conditions(stmt_where_conditions, m_obj)
 
     # there is issue, when first_pass_flag is unset -1,
     # some rows won't be detected., even if the row is first pass flag
@@ -185,15 +213,53 @@ def get_test_record_by_multisearch(value_dict):
         where(*stmt_where_conditions).
         order_by(asc(TestRecord.record_time))
     ).all()
+    for row in dataset:
+        op(row)
+    return dataset
+
+
+def get_test_yield(value_dict: dict):
+    session = Session(schema.engine)
+
+    try:
+        m_obj = YieldParams.model_validate(value_dict)
+    except Exception as e:
+        raise schema.ParamException(e)
+
+    stmt_where_conditions = []
+    _get_part_of_where_conditions(stmt_where_conditions, m_obj)
+
+    # ADT sampling data need include ?
+    stmt_where_conditions.append(
+        TestRecord.passfail.in_(['P', 'F'])
+    )
+
+    if m_obj.yield_type == DataType.FIRST_PASS:
+        stmt_where_conditions.append(
+            TestRecord.first_pass_flag == schema.FirstPassState.FIRST
+        )
+
+    dataset = session.execute(
+        select(
+            TestRecord.record_time,
+            TestRecord.sernum,
+            TestRecord.uuttype,
+            TestRecord.test_area,
+            TestRecord.passfail,
+            TestRecord.test_machine,
+        ).where(*stmt_where_conditions)
+    )
+    for row in dataset:
+        op(row)
     return dataset
 
 
 if __name__ == '__main__':
-    demo1 = {
-        'sernum': 'FCW%,FOC%',
-        'test_area': 'PCB2C',
+    _query = {
+        'uuttype': 'IE-3500-%',
         'start_date': '2024-11-20',
         'end_date': '2024-12-29',
-        'passfail': 'F',
+        'view_type': ViewType.NO_DATE,
+        'yield_type': DataType.TEST,
     }
-    get_test_record_by_multisearch(demo1)
+    get_test_yield(_query)
