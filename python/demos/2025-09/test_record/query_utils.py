@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Optional
 from typing import Self
 
+import pandas as pd
 from dateutil.relativedelta import relativedelta
 from objprint import op
 from pydantic import BaseModel
@@ -218,48 +219,103 @@ def get_test_record_by_multisearch(value_dict):
     return dataset
 
 
+def add_converted_date_column(
+        df: pd.DataFrame,
+        source_col: str,
+        view_type: ViewType,
+        new_column_name='date_at'):
+    df[source_col] = pd.to_datetime(df[source_col])
+
+    if view_type == ViewType.NO_DATE:
+        df[new_column_name] = pd.to_datetime('2000-01-01')
+    elif view_type == ViewType.WEEK:
+        df[new_column_name] = df[source_col] - pd.to_timedelta(df[source_col].dt.dayofweek, unit='D')
+    elif view_type == ViewType.MONTH:
+        df[new_column_name] = df[source_col].dt.to_period('M').dt.start_time
+    else:
+        raise ValueError("invalid view_type")
+    df[new_column_name] = df[new_column_name].dt.normalize()
+
+
+# noinspection PyPep8Naming
+def _get_ETE_by_uuttype(df: pd.DataFrame):
+    grouped = (
+        df.groupby(['uuttype', 'date_at', 'sernum'])['is_fail']
+        .apply(lambda x: ~x.any())
+        .reset_index(name='all_passed')
+    )
+    passed_sernum_list = grouped[grouped['all_passed']]
+    resultset = passed_sernum_list.groupby(['uuttype', 'date_at']).size().reset_index(name='ETE_count')
+    return resultset
+
+
+# noinspection PyPep8Naming
+def _get_ETE_by_summary(df: pd.DataFrame):
+    return df.groupby('sernum')['passfail'].apply(lambda x: (x == 'P').all()).sum()
+
+
 def get_test_yield(value_dict: dict):
     session = Session(schema.engine)
 
     try:
-        m_obj = YieldParams.model_validate(value_dict)
+        param_obj = YieldParams.model_validate(value_dict)
     except Exception as e:
         raise schema.ParamException(e)
 
     stmt_where_conditions = []
-    _get_part_of_where_conditions(stmt_where_conditions, m_obj)
+    _get_part_of_where_conditions(stmt_where_conditions, param_obj)
 
     # ADT sampling data need include ?
     stmt_where_conditions.append(
         TestRecord.passfail.in_(['P', 'F'])
     )
 
-    if m_obj.yield_type == DataType.FIRST_PASS:
+    if param_obj.yield_type == DataType.FIRST_PASS:
         stmt_where_conditions.append(
             TestRecord.first_pass_flag == schema.FirstPassState.FIRST
         )
 
-    dataset = session.execute(
+    # 1. get dataset from local database
+    original_df = pd.read_sql(
         select(
             TestRecord.record_time,
             TestRecord.sernum,
             TestRecord.uuttype,
             TestRecord.test_area,
-            TestRecord.passfail,
+            TestRecord.passfail,  # P, F
             TestRecord.test_machine,
-        ).where(*stmt_where_conditions)
+        ).where(*stmt_where_conditions),
+        session.bind
     )
-    for row in dataset:
-        op(row)
-    return dataset
+    add_converted_date_column(original_df, 'record_time', param_obj.view_type)
+    original_df['is_pass'] = (original_df['passfail'] == 'P').astype(int)
+    original_df['is_fail'] = (original_df['passfail'] == 'F').astype(int)
+
+    # 2. start get aggregate dataset
+    df_zzm_pass_fail_stats = original_df.groupby('test_area').agg(
+        pass_cnt=('is_pass', 'sum'),
+        fail_cnt=('is_fail', 'sum'),
+        total_cnt=('passfail', 'count')
+    )
+    df_zzm_unique_sernum_qty = original_df['sernum'].nunique()
+
+    df_pass_fail_stats = original_df.groupby(['uuttype', 'date_at', 'test_area']).agg(
+        pass_cnt=('is_pass', 'sum'),
+        fail_cnt=('is_fail', 'sum'),
+        total_cnt=('passfail', 'count')
+    )
+    df_unique_sernum_qty = original_df.groupby(['uuttype', 'date_at']).agg(
+        total_qty=('sernum', 'nunique')
+    )
 
 
 if __name__ == '__main__':
     _query = {
         'uuttype': 'IE-3500-%',
+        'test_area': 'PCB%',
         'start_date': '2024-11-20',
         'end_date': '2024-12-29',
-        'view_type': ViewType.NO_DATE,
-        'yield_type': DataType.TEST,
+        'view_type': ViewType.MONTH,
+        'yield_type': DataType.FIRST_PASS,
     }
     get_test_yield(_query)

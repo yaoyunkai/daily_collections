@@ -73,7 +73,13 @@ def save_json_file_to_db(filepath: str):
                     row_value = action_or_default
             to_insert_item[db_key] = row_value
 
-        # op(to_insert_item)
+        # copy first_pass_flag
+        first_pass = row_item['firstpass']
+        if first_pass:
+            to_insert_item['first_pass_flag'] = schema.FirstPassState.FIRST
+        else:
+            to_insert_item['first_pass_flag'] = schema.FirstPassState.NOT_FIRST
+
         data_to_insert.append(to_insert_item)
 
     if not data_to_insert:
@@ -134,4 +140,4 @@ def update_first_pass_flags():
 
 
 if __name__ == '__main__':
-    update_first_pass_flags()
+    pass
