@@ -1,0 +1,48 @@
+uv python list
+uv python install 
+
+------------------------------------------------------------------
+
+uv build ：构建分发版本。
+
+uv init --package <example-pkg> 创建一个package  
+uv init <project-name> 创建一个project, 此时并不会创建虚拟环境
+cd <project-name> 
+uv run main.py  这时才会创建venv
+
+uv run --> 会自动 uv lock , uv sync
+
+
+如何使用指定的python版本呢？
+uv venv --python <python version> 
+
+如何从现有的project仓库恢复环境呢？
+git clone <repo-url>
+uv venv 
+uv sync
+
+
+如何使用ruff等lint工具？？
+
+
+------------------------------------------------------------------
+uv version ： show packages' version 
+
+像pip list 一样show packages
+uv pip tree
+uv pip list
+
+
+常见的添加package的方式。
+uv add <package-name>
+uv add -r requirements.txt
+uv add --dev pytest
+
+
+
+uv lock  锁定是将项目依赖项解析并将其确切版本记录到 uv.lock 文件中的过程。
+
+uv sync   同步是从 uv.lock 文件中安装包到项目环境的过程。 
+
+
+
