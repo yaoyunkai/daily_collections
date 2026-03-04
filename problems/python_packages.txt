@@ -1,0 +1,7 @@
+Scikit-build-core:
+    https://scikit-build-core.readthedocs.io/en/latest/
+
+Python Packaging User Guide:
+    https://packaging.python.org/en/latest/
+
+=========================================================
