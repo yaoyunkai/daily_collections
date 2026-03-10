@@ -5,8 +5,10 @@ uv python install
 
 uv build ：构建分发版本。
 
-uv init --package <example-pkg> 创建一个package  
-uv init <project-name> 创建一个project, 此时并不会创建虚拟环境
+
+uv init -p python3.11                     通过-p --python 来指定要使用的python版本
+uv init --package <example-pkg>           创建一个package
+uv init <project-name>                    创建一个project, 此时并不会创建虚拟环境
 cd <project-name> 
 uv run main.py  这时才会创建venv
 
@@ -23,6 +25,18 @@ uv sync
 
 
 如何使用ruff等lint工具？？
+
+
+
+uv add 的 link-mode, 在windows上默认是 hardlink的模式，但是由于uv
+的cache 目录是c盘，如果自己的项目在d盘的话，就无法hardlink.
+通过设置环境变量: UV_CACHE_DIR
+
+>: fsutil hardlink list __init__.py
+    \code\pydata_book\.venv\Lib\site-packages\jinja2\__init__.py
+    \code\QtWithPython\.venv\Lib\site-packages\jinja2\__init__.py
+    \Users\libyao\AppData\Local\uv\cache\archive-v0\440HuhcpagCYW6djZrfDF\jinja2\__init__.py
+    \code\fastapi_practice\.venv\Lib\site-packages\jinja2\__init__.py
 
 
 ------------------------------------------------------------------
