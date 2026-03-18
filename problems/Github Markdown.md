@@ -1,4 +1,4 @@
-# Github Markdown
+# Github-Markdown
 
 > 这是GitHub风格的markdown。
 
@@ -18,4 +18,27 @@
 这是详细内容，这是详细内容，这是详细内容，<br/> 这是详细内容，这是详细内容，
 
 </details>
+
+看起来 Typora 对 `details` 标签支持不是很好。
+
+## 格式化文字
+
+| style         | Syntax           | Example                               |
+| :------------ | ---------------- | ------------------------------------- |
+| Strikethrough | `~~ ~~` or `~ ~` | ~~This was mistaken text~~            |
+| Subscript     | `<sub> </sub>`   | This is a <sub>subscript</sub> text   |
+| Superscript   | `<sup> </sup>`   | This is a <sup>superscript</sup> text |
+| Underline     | `<ins> </ins>`   | This is an <ins>underlined</ins> text |
+
+## 颜色模式
+
+The background color is `#ffffff` for light mode and `#000000` for dark mode.
+
+看起来typora并不支持颜色模式。
+
+## Links
+
+This site was built using [GitHub Pages](https://pages.github.com/)
+
+让我们回到标题: [Title](#Github-Markdown).
 
