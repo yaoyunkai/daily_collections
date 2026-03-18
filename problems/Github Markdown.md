@@ -42,3 +42,26 @@ This site was built using [GitHub Pages](https://pages.github.com/)
 
 让我们回到标题: [Title](#Github-Markdown).
 
+## line break
+
+- **在一句话后面加上两个空格**
+
+  This example  
+  Will span two lines
+
+- **在第一行末尾添加反斜杠。**
+
+  This example\
+  Will span two lines
+
+- **在第一行末尾添加一个 HTML 单行换行符标签。**
+
+  This example<br/>
+  Will span two lines
+
+## 显示图片
+
+使用相对链接
+
+![这是一个图片](.assets/image-20260318095417224.png)
+
