@@ -182,5 +182,5 @@ $$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \
 \left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)
 ```
 
-所有从结果来看，简单的使用内联公式，复杂的公式使用 math公式块。
+所以从结果来看，简单的使用内联公式，复杂的公式使用 math公式块。
 
