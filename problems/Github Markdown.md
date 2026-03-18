@@ -160,3 +160,21 @@ graph TD;
 
 一般来说，数学表达式都使用 latex 语法。
 
+Github支持内联公式和块级公式。对于内联公式，`$`之间不要有空格。
+
+- 内联公式
+- 块级公式
+- `math` 块公式
+
+第一段，This sentence uses `$` delimiters to show math inline: $\sqrt{3x-1}+(1+x)^2$
+
+下面的是块级公式：
+$$
+\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)
+$$
+下面的一段是 math块公式：
+
+```math
+\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)
+```
+
