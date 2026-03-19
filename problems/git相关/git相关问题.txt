@@ -16,25 +16,26 @@ warning: in the working copy of '.gitignore', CRLF will be replaced by LF the ne
 
 相关配置:
     core.eol: 工作目录文本文件的换行符, 可选 lf crlf native 默认值 native
-    core.safecrlf:
+    core.safecrlf: true warn false
     core.autocrlf: true input false
 
 跨平台配置:
     $ git config --global core.autocrlf input
     $ git config --global core.safecrlf true
 
+忽略警告的配置：
+# 1. 提交时转换为 LF，检出时不转换（保持 LF）
+git config --global core.autocrlf input
+# 2. 关闭换行符转换时的警告提示
+git config --global core.safecrlf false
 
-文件 .gitignore 的格式规范如下：
-    所有空行或者以 # 开头的行都会被 Git 忽略。
-    可以使用标准的 glob 模式匹配，它会递归地应用在整个工作区中。
-    匹配模式可以以（/）开头防止递归。
-    匹配模式可以以（/）结尾指定目录。
-    要忽略指定模式以外的文件或目录，可以在模式前加上叹号（!）取反。
 
+git config --show-origin core.autocrlf
+查看配置的来源 
+git config --list --show-origin
+git的配置有三个级别 System Global 和 仓库级别。--show-scope 
 
 -----------------------------------------------------------
-git config --show-origin core.autocrlf
-查看配置的来源
 
 core.autocrlf
     # 提交时转换为LF，检出时转换为CRLF
@@ -45,3 +46,18 @@ core.autocrlf
 
     # 提交检出均不转换
     git config --global core.autocrlf false
+
+
+.gitattributes 
+
+* text eol=lf
+eol=lf 会强制 Git 在提交和检出时都使用 LF 换行符。
+
+===================================================================================================
+
+文件 .gitignore 的格式规范如下：
+    所有空行或者以 # 开头的行都会被 Git 忽略。
+    可以使用标准的 glob 模式匹配，它会递归地应用在整个工作区中。
+    匹配模式可以以（/）开头防止递归。
+    匹配模式可以以（/）结尾指定目录。
+    要忽略指定模式以外的文件或目录，可以在模式前加上叹号（!）取反。
