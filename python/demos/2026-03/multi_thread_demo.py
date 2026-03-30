@@ -3,16 +3,15 @@ write your description here.
 
 """
 
+import sys
 import threading
 import time
-import sys
 
-# 检查 GIL 状态
-if hasattr(sys, "_is_gil_enabled") and sys._is_gil_enabled():
-    print("⚠️  警告：当前运行在标准 GIL 模式下，多线程不会提升 CPU 性能！")
-    print("   请使用 python3.13t 或 uv run -p 3.13t 运行此脚本")
-else:
+if hasattr(sys, "_is_gil_enabled") and not sys._is_gil_enabled():
     print("✅ 运行在无 GIL 模式下，多线程将利用多核 CPU")
+else:
+    print("⚠️ 警告：当前运行在标准 GIL 模式下，多线程不会提升 CPU 性能！")
+    print("   请使用 python3.13t 或 uv run -p 3.13t 运行此脚本")
 
 
 # CPU 密集型任务：计算平方和

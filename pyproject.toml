@@ -8,12 +8,12 @@ dependencies = [
     "aiohttp>=3.13.3",
     "antlr4-python3-runtime>=4.13.2",
     "antlr4-tools>=0.2.2",
-    "black>=26.3.1",
     "chardet>=7.4.0.post1",
     "duckdb>=1.5.1",
     "faker>=40.11.1",
     "fastapi>=0.135.2",
     "hiredis>=3.3.1",
+    "ipython>=9.10.1",
     "lxml>=6.0.2",
     "matplotlib>=3.10.8",
     "mmh3>=5.2.1",
@@ -35,3 +35,11 @@ dependencies = [
     "sqlalchemy>=2.0.48",
     "uvicorn>=0.42.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.8",
+]
+
+[tool.ruff]
+line-length = 120

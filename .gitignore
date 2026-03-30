@@ -13,3 +13,5 @@ __pycache__/
 /gen/
 
 /demo/
+
+.ruff_cache/
