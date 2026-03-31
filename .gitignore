@@ -15,3 +15,5 @@ __pycache__/
 /demo/
 
 .ruff_cache/
+
+/demos/
