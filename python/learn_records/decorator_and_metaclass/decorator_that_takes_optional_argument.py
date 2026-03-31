@@ -5,7 +5,8 @@ Created at 2023/3/27
 """
 
 import logging
-from functools import wraps, partial
+from functools import partial, wraps
+from typing import Callable, Optional
 
 
 def logged(func=None, *, level=logging.DEBUG, name=None, message=None):
@@ -39,9 +40,9 @@ add = logged(add)
 """
 
 
-@logged(level=logging.CRITICAL, name='example')
+@logged(level=logging.CRITICAL, name="example")
 def spam():
-    print('Spam!')
+    print("Spam!")
 
 
 """
@@ -49,3 +50,44 @@ spam = logged(level=logging.CRITICAL, name='example')(spam)
 
 
 """
+
+
+def deco(func: Optional[Callable] = None, *, num: int = 1) -> Callable:
+
+    # @deco(num=3)
+    if func is None:
+        return partial(deco, num=num)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        print(f"--- 装饰器启动，当前 num 的值为: {num} ---")
+        result = None
+        for i in range(num):
+            print(f"执行第 {i + 1} 次...")
+            result = func(*args, **kwargs)
+
+        return result
+
+    return wrapper
+
+
+@deco
+def say_hello(name: str) -> None:
+    """
+    say_hello = deco(say_hello)
+
+    """
+    print(f"Hello, {name}!")
+
+
+@deco(num=3)
+def say_hi(name: str) -> None:
+    print(f"Hi, {name}!")
+
+
+if __name__ == "__main__":
+    print("测试无参装饰器：")
+    say_hello("Alice")
+
+    print("\n测试有参装饰器：")
+    say_hi("Bob")
