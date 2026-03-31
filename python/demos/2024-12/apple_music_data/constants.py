@@ -68,66 +68,65 @@ Clean                      :     ???? 不知道什么意思
 'Movement Name',                乐章名称
 
 """
+
 from functools import lru_cache
 
 KEY_LIST = [
-    'Track ID',
-    'Name',
-    'Artist',
-    'Album Artist',
-    'Composer',
-    'Album',
-    'Genre',
-    'Kind',  # need check
-    'Size',
-    'Total Time',
-    'Disc Number',
-    'Disc Count',
-    'Track Number',
-    'Track Count',
-    'Year',
-    'Date Modified',
-    'Date Added',
-    'Bit Rate',
-    'Sample Rate',
-    'Play Count',
-    'Play Date',
-    'Play Date UTC',
-    'Skip Count',
-    'Skip Date',
-    'Release Date',
-    'Compilation',
-    'Artwork Count',  # need check
-
-    'Sort Album',
-    'Sort Artist',
-    'Sort Album Artist',
-    'Sort Name',
-    'Sort Composer',
-
-    'Persistent ID',
-    'Track Type',  # need check
-    'Apple Music',  # flag
-    'Loved',
-    'Part Of Gapless Album',
-    'Rating',
-    'Album Rating',
-    'Album Rating Computed',
-    'Grouping',  # 古典音乐才有
-    'Explicit',  # E标
-    'Work',
-    'Movement Number',
-    'Movement Count',
-    'Movement Name',
-    'Normalization',  # 下载到本地的才有
-    'Protected',  # 下载到本地的才有
-    'Location',  # 本地文件路径
-    'File Folder Count',  # 下载到本地的才有
-    'Library Folder Count',  # 下载到本地的才有
-    'Clean',  # 歌曲是否有部分片段被清除 ???
-    'Podcast',  # 博客
-    'Unplayed',  # 博客项目才有
-    'Playlist Only'  # 只在播放列表，不在资料库的。
+    "Track ID",
+    "Name",
+    "Artist",
+    "Album Artist",
+    "Composer",
+    "Album",
+    "Genre",
+    "Kind",  # need check
+    "Size",
+    "Total Time",
+    "Disc Number",
+    "Disc Count",
+    "Track Number",
+    "Track Count",
+    "Year",
+    "Date Modified",
+    "Date Added",
+    "Bit Rate",
+    "Sample Rate",
+    "Play Count",
+    "Play Date",
+    "Play Date UTC",
+    "Skip Count",
+    "Skip Date",
+    "Release Date",
+    "Compilation",
+    "Artwork Count",  # need check
+    "Sort Album",
+    "Sort Artist",
+    "Sort Album Artist",
+    "Sort Name",
+    "Sort Composer",
+    "Persistent ID",
+    "Track Type",  # need check
+    "Apple Music",  # flag
+    "Loved",
+    "Part Of Gapless Album",
+    "Rating",
+    "Album Rating",
+    "Album Rating Computed",
+    "Grouping",  # 古典音乐才有
+    "Explicit",  # E标
+    "Work",
+    "Movement Number",
+    "Movement Count",
+    "Movement Name",
+    "Normalization",  # 下载到本地的才有
+    "Protected",  # 下载到本地的才有
+    "Location",  # 本地文件路径
+    "File Folder Count",  # 下载到本地的才有
+    "Library Folder Count",  # 下载到本地的才有
+    "Clean",  # 歌曲是否有部分片段被清除 ???
+    "Podcast",  # 博客
+    "Unplayed",  # 博客项目才有
+    "Playlist Only",  # 只在播放列表，不在资料库的。
 ]
 
 
@@ -137,12 +136,13 @@ class Schema:
     个人数据字段
 
     """
-    track_id = 'Track ID'  # personal track id
+
+    track_id = "Track ID"  # personal track id
     persistent_id = "Persistent ID"  # Persistent ID
 
-    kind = 'Kind'  # ???
-    artwork_count = 'Artwork Count'
-    track_type = 'Track Type'
+    kind = "Kind"  # ???
+    artwork_count = "Artwork Count"
+    track_type = "Track Type"
 
     # 歌曲属性字段
     name = "Name"  # 歌曲名称
@@ -152,10 +152,10 @@ class Schema:
     composer = "Composer"  # 作曲者    &  ,
     genre = "Genre"  # 歌曲类型
     explicit = "Explicit"  # E标
-    clean = 'Clean'  # 歌曲是否有部分片段被清除 ???
+    clean = "Clean"  # 歌曲是否有部分片段被清除 ???
     compilation = "Compilation"  # 专辑是多个艺人的歌曲合辑
 
-    size = 'Size'  # 文件大小 Byte
+    size = "Size"  # 文件大小 Byte
     total_time = "Total Time"  # 文件时长  ms
     bit_rate = "Bit Rate"
     sample_rate = "Sample Rate"
@@ -181,7 +181,7 @@ class Schema:
     skip_date = "Skip Date"  # 上次跳过时间
 
     rating = "Rating"  # 评分
-    album_rating = 'Album Rating'  # 专辑评分
+    album_rating = "Album Rating"  # 专辑评分
     loved = "Loved"  # 标记为喜爱
 
 
@@ -189,12 +189,12 @@ class Schema:
 def get_schema_dict():
     new_dict = {}
     for k, v in Schema.__dict__.items():
-        if k.startswith('_'):
+        if k.startswith("_"):
             continue
         new_dict[k] = v
     return new_dict
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     result = get_schema_dict()
     print(result)

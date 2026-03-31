@@ -6,6 +6,7 @@ python 的类型系统
 from binascii import hexlify
 from ctypes import string_at
 from sys import getsizeof
+from typing import Any, Iterable
 
 a = 0b_01010000_01000001_01010100
 
@@ -23,6 +24,11 @@ def run_with_things():
 
 def print_object_source_bytes(obj: object):
     print(hexlify(string_at(id(obj), getsizeof(obj))))
+
+
+def print_items(items: Iterable[Any]):
+    for item in items:
+        print(item)
 
 
 if __name__ == "__main__":

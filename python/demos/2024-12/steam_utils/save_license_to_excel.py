@@ -6,6 +6,7 @@ https://store.steampowered.com/account/licenses/
 
 
 """
+
 import re
 from datetime import date, datetime
 from enum import Enum, auto
@@ -27,7 +28,7 @@ class LicenseType(Enum):
 
 def get_current_datetime():
     _obj = datetime.now()
-    return _obj.strftime('%Y%m%d%H%M%S')
+    return _obj.strftime("%Y%m%d%H%M%S")
 
 
 def normalize_datetime(val: str):
@@ -38,23 +39,23 @@ def normalize_datetime(val: str):
     :param val:
     :return:
     """
-    pattern = re.compile(r'(\d{4}) 年 (\d{1,2}) 月 (\d{1,2}) 日')
+    pattern = re.compile(r"(\d{4}) 年 (\d{1,2}) 月 (\d{1,2}) 日")
 
     match = pattern.search(val)
     if not match:
-        raise ValueError('not format value')
+        raise ValueError("not format value")
 
     return date(*[int(s) for s in match.groups()])
 
 
 def convert_license_type(val: str):
-    if '商店' in val:
+    if "商店" in val:
         return LicenseType.STEAM_STORE
-    if '免费' in val:
+    if "免费" in val:
         return LicenseType.FREE
-    if '零售' in val:
+    if "零售" in val:
         return LicenseType.CDK
-    if '礼物' in val:
+    if "礼物" in val:
         return LicenseType.GIFT
 
 
@@ -79,22 +80,22 @@ def get_license_list(filename: str):
             ]
             result_list.append(item)
 
-    print(f'获取了{len(result_list)}条数据')
+    print(f"获取了{len(result_list)}条数据")
 
     return result_list
 
 
 def save_steam_license_file_to_excel(license_list: list):
-    filename = 'steam_license_{}.xlsx'.format(get_current_datetime())
+    filename = "steam_license_{}.xlsx".format(get_current_datetime())
 
-    df = pandas.DataFrame(license_list, columns=['date', 'item_name', 'license_type'])
+    df = pandas.DataFrame(license_list, columns=["date", "item_name", "license_type"])
 
-    df['date'] = pandas.to_datetime(df['date'])
+    df["date"] = pandas.to_datetime(df["date"])
     # df['item_name'] = df['item_name'].astype(str)
     # df['license_type'] = df['license_type'].astype(str)
 
     df.to_excel(filename, index=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_license_list(LICENSE_FILE)

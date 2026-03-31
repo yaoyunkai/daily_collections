@@ -6,20 +6,19 @@ read music list
 
 import json
 
+import constants
 from objprint import op
 
-import constants
-
-ITEM_KEY = 'Tracks'
-MUSIC_KEY = 'Apple Music'
+ITEM_KEY = "Tracks"
+MUSIC_KEY = "Apple Music"
 
 
 def print_all_keys(filepath):
-    with open(filepath, mode='rb') as fp:
+    with open(filepath, mode="rb") as fp:
         content = json.load(fp)
 
     key_list = []
-    all_items = content['Tracks']
+    all_items = content["Tracks"]
 
     for k, v in all_items.items():
         for kk, vv in v.items():
@@ -29,7 +28,7 @@ def print_all_keys(filepath):
 
 
 def load_apple_music_items(filepath):
-    with open(filepath, mode='r', encoding='utf8') as fp:
+    with open(filepath, mode="r", encoding="utf8") as fp:
         content = json.load(fp)
 
     music_items = content[ITEM_KEY]
@@ -58,4 +57,4 @@ def load_apple_music_items(filepath):
 
 if __name__ == "__main__":
     # print_all_keys(r'C:\code\Py311\demos\202512\demo.json')
-    load_apple_music_items(r'C:\code\Py311\demos\202512\demo.json')
+    load_apple_music_items(r"C:\code\Py311\demos\202512\demo.json")
