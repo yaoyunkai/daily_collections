@@ -25,5 +25,5 @@ def sequential_search(a_list: Sequence[int, float], item):
     return found
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

@@ -4,6 +4,7 @@
 
 created at 2024/12/17
 """
+
 from collections import defaultdict
 
 
@@ -69,6 +70,6 @@ def anagram_sol3(s1: str, s2: str):
     return cnt1 == cnt2
 
 
-if __name__ == '__main__':
-    res1 = anagram_sol3('654', '456')
+if __name__ == "__main__":
+    res1 = anagram_sol3("654", "456")
     print(res1)

@@ -5,6 +5,7 @@ turtle package
 
 created at 2025/4/9
 """
+
 from turtle import Turtle, exitonclick
 
 my_turtle = Turtle()
@@ -33,7 +34,7 @@ def draw_tree():
     my_turtle.up()
     my_turtle.backward(300)
     my_turtle.down()
-    my_turtle.color('green')
+    my_turtle.color("green")
     tree(110, my_turtle)
 
 
@@ -54,7 +55,7 @@ def get_mid(p1, p2):
 
 
 def sierpinski(points, degree, t: Turtle):
-    colormap = ['blue', 'red', 'green', 'white', 'yellow', 'violet', 'orange']
+    colormap = ["blue", "red", "green", "white", "yellow", "violet", "orange"]
     draw_triangle(points, colormap[degree], t)
 
     if degree > 0:
@@ -68,7 +69,7 @@ def draw_final():
     sierpinski(my_points, 5, my_turtle)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # draw_spiral(my_turtle, 100)
 
     # draw_tree()

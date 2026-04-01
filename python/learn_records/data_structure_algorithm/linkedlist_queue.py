@@ -61,6 +61,6 @@ def hot_potato(name_list, num):
     return queue.dequeue()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rrr = hot_potato(["Bill", "David", "Susan", "Jane", "Kent", "Brad"], 7)
     print(rrr)

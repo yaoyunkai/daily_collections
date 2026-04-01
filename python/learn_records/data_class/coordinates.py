@@ -8,7 +8,7 @@ import typing
 
 
 def usage_of_namedtuple():
-    Coordinate1 = typing.NamedTuple('Coordinate1', lat=float, lon=float)
+    Coordinate1 = typing.NamedTuple("Coordinate1", lat=float, lon=float)
     print(typing.get_type_hints(Coordinate1))
 
     pos0 = Coordinate1(12.34, 12.12)
@@ -23,7 +23,7 @@ class Coordinate:
         self.lon = lon
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pos1 = Coordinate(55.76, 37.62)
     pos2 = Coordinate(55.76, 37.62)
     print(pos1 == pos2)

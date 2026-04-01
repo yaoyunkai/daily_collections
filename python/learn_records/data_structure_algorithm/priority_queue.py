@@ -23,12 +23,12 @@ class PriorityQueue:
 
     def find_min(self):
         if self.is_empty():
-            raise ValueError('empty PQ')
+            raise ValueError("empty PQ")
         return self._pq[1]
 
     def delete_min(self):
         if self.is_empty():
-            raise ValueError('empty PQ')
+            raise ValueError("empty PQ")
 
         ret_val = self._pq[1]
         self._pq[1] = self._pq[self._n]
@@ -71,7 +71,7 @@ class PriorityQueue:
             idx = j
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pq = PriorityQueue()
     pq.insert(5)
     pq.insert(1)

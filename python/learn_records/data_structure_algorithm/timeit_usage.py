@@ -8,11 +8,11 @@ import timeit
 
 
 def test2():
-    l = []
+    l_list = []
     for i in range(1000):
-        l = l+ [i]
+        l_list = l_list + [i]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     t1 = timeit.Timer("test2()", "from __main__ import test2")
-    print(f'concat {t1.timeit(1000)} ms')
+    print(f"concat {t1.timeit(1000)} ms")

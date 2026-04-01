@@ -7,6 +7,7 @@
 
 created at 2025/1/6
 """
+
 import string
 
 
@@ -35,11 +36,11 @@ class Stack:
 
 def par_check(val: str):
     right = {
-        ')': '(',
-        '}': '{',
-        ']': '[',
+        ")": "(",
+        "}": "{",
+        "]": "[",
     }
-    left = ['(', '[', '{']
+    left = ["(", "[", "{"]
 
     stack = Stack()
 
@@ -58,42 +59,42 @@ def dec_to_str(val: int, *, base=2):
     2 8 16
     """
     if not 2 <= base <= 16:
-        raise ValueError('invalid base number, must be 2, 8, 16')
+        raise ValueError("invalid base number, must be 2, 8, 16")
 
     stack = Stack()
 
     while val > 0:
         rem = val % base
         if rem == 10:
-            rem = 'A'
+            rem = "A"
         elif rem == 11:
-            rem = 'B'
+            rem = "B"
         elif rem == 12:
-            rem = 'C'
+            rem = "C"
         elif rem == 13:
-            rem = 'D'
+            rem = "D"
         elif rem == 14:
-            rem = 'E'
+            rem = "E"
         elif rem == 15:
-            rem = 'F'
+            rem = "F"
         else:
             rem = str(rem)
 
         stack.push(rem)
         val = val // base
 
-    result = ''
+    result = ""
     while not stack.is_empty():
         result += stack.pop()
     return result
 
 
 prec = {
-    '*': 3,
-    '/': 3,
-    '+': 2,
-    '-': 2,
-    '(': 1,
+    "*": 3,
+    "/": 3,
+    "+": 2,
+    "-": 2,
+    "(": 1,
 }
 
 
@@ -105,12 +106,12 @@ def infix_to_postfix(infix_expr: str):
     for token in token_list:
         if token in string.ascii_uppercase:
             postfix_list.append(token)
-        elif token == '(':
+        elif token == "(":
             op_stack.push(token)
-        elif token == ')':
+        elif token == ")":
             top_token = op_stack.pop()
 
-            while top_token != '(':
+            while top_token != "(":
                 postfix_list.append(top_token)
                 top_token = op_stack.pop()
         else:
@@ -122,7 +123,7 @@ def infix_to_postfix(infix_expr: str):
     while not op_stack.is_empty():
         postfix_list.append(op_stack.pop())
 
-    return ' '.join(postfix_list)
+    return " ".join(postfix_list)
 
 
 def postfix_eval(postfix_expr: str):
@@ -143,16 +144,16 @@ def postfix_eval(postfix_expr: str):
 
 
 def do_math(op, op1, op2):
-    if op == '*':
+    if op == "*":
         return op1 * op2
-    elif op == '/':
+    elif op == "/":
         return op1 / op2
-    elif op == '+':
+    elif op == "+":
         return op1 + op2
     else:
         return op1 - op2
 
 
-if __name__ == '__main__':
-    print(infix_to_postfix('A + B * C'))
-    print(postfix_eval('4 5 6 * +'))
+if __name__ == "__main__":
+    print(infix_to_postfix("A + B * C"))
+    print(postfix_eval("4 5 6 * +"))

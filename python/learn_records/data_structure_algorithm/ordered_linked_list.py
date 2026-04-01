@@ -12,11 +12,6 @@ class Node:
         self.next = None
 
 
-class ComparableNode(Node):
-    def compare(self, other: 'ComparableNode'):
-        raise NotImplemented
-
-
 class UnorderedList:
     def __init__(self):
         self.head = None
@@ -66,7 +61,7 @@ class UnorderedList:
 
         if not found:
             # nothing to do
-            raise ValueError('value not found')
+            raise ValueError("value not found")
 
         if prev is None:
             self.head = cur.next
@@ -80,11 +75,10 @@ class UnorderedList:
         while current is not None:
             elements.append(str(current.data))
             current = current.next
-        return '[' + ', '.join(elements) + ']'
+        return "[" + ", ".join(elements) + "]"
 
 
 class OrderedList:
-
     def __init__(self):
         self.head = None
 
@@ -161,7 +155,7 @@ class OrderedList:
 
         if not found:
             # nothing to do
-            raise ValueError('value not found')
+            raise ValueError("value not found")
 
         if prev is None:
             self.head = cur.next
@@ -175,10 +169,10 @@ class OrderedList:
         while current is not None:
             elements.append(str(current.value))
             current = current.next
-        return '[' + ', '.join(elements) + ']'
+        return "[" + ", ".join(elements) + "]"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     od = OrderedList()
     od.add(2)
     od.add(4)

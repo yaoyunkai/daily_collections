@@ -4,6 +4,7 @@
 
 created at 2025/4/15
 """
+
 from typing import Optional
 
 
@@ -16,7 +17,7 @@ class TreeNode:
         self.size = size
 
     def __str__(self):
-        return f'Node<{self.key}>'
+        return f"Node<{self.key}>"
 
 
 def _size(node: TreeNode):
@@ -28,7 +29,7 @@ def _size(node: TreeNode):
 
 def _get(node: TreeNode, key):
     if key is None:
-        raise ValueError('calls get() with a null key')
+        raise ValueError("calls get() with a null key")
     if node is None:
         return None
 
@@ -171,7 +172,7 @@ class BinarySearchTree:
 
     def put(self, key, value):
         if key is None:
-            raise ValueError('calls put() with a null key')
+            raise ValueError("calls put() with a null key")
         if value is None:
             self.delete(key)
 
@@ -185,21 +186,21 @@ class BinarySearchTree:
 
     def delete(self, key):
         if key is None:
-            raise ValueError('calls put() with a null key')
+            raise ValueError("calls put() with a null key")
         self.root = _delete(self.root, key)
 
     def delete_min(self):
         if self.is_empty():
-            raise ValueError('Symbol table underflow')
+            raise ValueError("Symbol table underflow")
         self.root = _delete_min(self.root)
 
     def delete_max(self):
         if self.is_empty():
-            raise ValueError('Symbol table underflow')
+            raise ValueError("Symbol table underflow")
         self.root = _delete_max(self.root)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     bst = BinarySearchTree()
     bst.put(70, 1)
     bst.put(31, 1)

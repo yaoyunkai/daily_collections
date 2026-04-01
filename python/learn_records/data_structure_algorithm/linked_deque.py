@@ -19,7 +19,7 @@ class Node:
         self.next = None
 
     def __str__(self):
-        return f'Node<{self.value}>'
+        return f"Node<{self.value}>"
 
 
 class Deque:
@@ -56,7 +56,7 @@ class Deque:
 
     def remove_front(self):
         if self.is_empty():
-            raise IndexError('empty Deque')
+            raise IndexError("empty Deque")
         value = self.front.value
         if self.front == self.rear:
             self.front = self.rear = None
@@ -68,7 +68,7 @@ class Deque:
 
     def remove_rear(self):
         if self.is_empty():
-            raise IndexError('empty Deque')
+            raise IndexError("empty Deque")
         value = self.rear.value
         if self.rear == self.front:
             self.rear = self.front = None
@@ -102,7 +102,7 @@ def pal_checker(value: str):
     return equal
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     q = Deque()
 
     q.add_front(1)
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     q.add_front(4)
     q.add_rear(6)
 
-    ret = pal_checker('ssseddweraf')
+    ret = pal_checker("ssseddweraf")
     print(ret)
-    ret = pal_checker('asdrdsa')
+    ret = pal_checker("asdrdsa")
     print(ret)

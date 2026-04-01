@@ -16,4 +16,4 @@ def move_tower(height, from_pole, to_pole, with_pole):
 
 
 def move_disk(fp, tp):
-    print(f'moving disk from {fp} to {tp} \n')
+    print(f"moving disk from {fp} to {tp} \n")

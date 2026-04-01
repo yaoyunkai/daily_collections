@@ -5,6 +5,7 @@
 
 created at 2025/4/9
 """
+
 import timeit
 
 from stack import Stack
@@ -27,10 +28,10 @@ def list_num_rec(num_list: list):
 
 
 def to_str(n, base: int):
-    convert_string = '0123456789ABCDEF'
+    convert_string = "0123456789ABCDEF"
 
     if not 2 <= base <= 16:
-        raise ValueError('base must be in 2~16')
+        raise ValueError("base must be in 2~16")
 
     if n < base:
         return convert_string[n]
@@ -42,9 +43,9 @@ def to_str_stack(n_out, base_out):
     r_stack = Stack()
 
     def _to_str_stack(n, base):
-        convert_string = '0123456789ABCDEF'
+        convert_string = "0123456789ABCDEF"
         if not 2 <= base <= 16:
-            raise ValueError('base must be in 2~16')
+            raise ValueError("base must be in 2~16")
 
         if n < base:
             r_stack.push(convert_string[n])
@@ -58,13 +59,13 @@ def to_str_stack(n_out, base_out):
 
 
 def to_str_with_dbg(n, base: int, level=0):
-    convert_string = '0123456789ABCDEF'
-    indent = '    ' * level  # 用缩进表示递归深度
+    convert_string = "0123456789ABCDEF"
+    indent = "    " * level  # 用缩进表示递归深度
 
     print(f"{indent}--> to_str(n={n}, base={base})")
 
     if not 2 <= base <= 16:
-        raise ValueError('base must be in 2~16')
+        raise ValueError("base must be in 2~16")
 
     if n < base:
         result = convert_string[n]
@@ -93,7 +94,7 @@ def test_cost():
     print(f"递归版本执行时间：{time_recursion:.6f} 秒")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(to_str_with_dbg(45, 2))
 
     to_str_stack(45, 8)

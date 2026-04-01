@@ -7,7 +7,7 @@ created at 2025/4/17
 
 def count_digits(n: int):
     if n < 1:
-        raise ValueError('must >= 1')
+        raise ValueError("must >= 1")
 
     count = 0
 
@@ -17,5 +17,5 @@ def count_digits(n: int):
     return count
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(count_digits(8333))

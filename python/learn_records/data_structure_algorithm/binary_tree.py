@@ -91,15 +91,15 @@ def in_order(tree: BinaryTree):
         in_order(tree.get_right_child())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 构建示例二叉树
-    root = BinaryTree('A')
-    root.insert_left('B')
-    root.insert_right('C')
-    root.left_child.insert_left('D')
-    root.left_child.insert_right('E')
-    root.right_child.insert_left('F')
-    root.right_child.insert_right('G')
+    root = BinaryTree("A")
+    root.insert_left("B")
+    root.insert_right("C")
+    root.left_child.insert_left("D")
+    root.left_child.insert_right("E")
+    root.right_child.insert_left("F")
+    root.right_child.insert_right("G")
 
     # 打印树结构
     root.pretty_print()

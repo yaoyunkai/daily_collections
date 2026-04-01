@@ -65,7 +65,7 @@ def simulation(num_seconds, pages_per_minute):
         lab_printer.tick()
 
     avg_wait = sum(waiting_times) / len(waiting_times)
-    print(f'average wait {avg_wait:.2f} seconds, {print_queue.size()} tasks remaining.')
+    print(f"average wait {avg_wait:.2f} seconds, {print_queue.size()} tasks remaining.")
 
 
 def new_print_task():
@@ -73,5 +73,5 @@ def new_print_task():
     return num == 180
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     simulation(3600, 5)
