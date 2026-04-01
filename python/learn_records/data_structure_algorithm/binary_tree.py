@@ -69,6 +69,29 @@ class BinaryTree:
 
         print(_pretty(self))
 
+    def to_graphviz(self):
+        """
+        将二叉树转换为 Graphviz DOT 格式的字符串。
+        """
+        lines = ["digraph BinaryTree {", '    node [shape=circle, fontname="Helvetica"];']
+
+        def traverse(node):
+            if node is None:
+                return
+            node_id = id(node)
+            lines.append(f'    "{node_id}" [label="{node.key}"];')
+            if node.left_child:
+                lines.append(f'    "{node_id}" -> "{id(node.left_child)}";')
+                traverse(node.left_child)
+
+            if node.right_child:
+                lines.append(f'    "{node_id}" -> "{id(node.right_child)}";')
+                traverse(node.right_child)
+
+        traverse(self)
+        lines.append("}")
+        return "\n".join(lines)
+
 
 def pre_order(tree: BinaryTree):
     if tree:
@@ -106,3 +129,14 @@ if __name__ == "__main__":
 
     # pre_order(root)
     post_order(root)
+
+    tree = BinaryTree("A")
+    tree.insert_left("B")
+    tree.insert_right("C")
+    tree.left_child.insert_left("D")
+    tree.left_child.insert_right("E")
+    tree.right_child.insert_right("F")
+
+    # 2. 生成并打印 DOT 字符串
+    dot_code = tree.to_graphviz()
+    print(dot_code)

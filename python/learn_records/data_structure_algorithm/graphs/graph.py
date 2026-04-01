@@ -1,30 +1,8 @@
 """
 
-图算法
+图的实现， 接邻矩阵和接邻表
 
-图是由一组顶点和一组能够将两个顶点相连的边组成的。
-
-一般使用0至V-1来表示一张含有V个顶点的图中的各个顶点
-
-我们用v-w的记法来表示连接v和w的边，w-v是这条边的另一种表示方法
-
-自环  一条连接一个顶点和其自身的边；
-
-        连接同一对顶点的两条边称为平行边。
-
-
-相邻顶点
-顶点的度数： 某个顶点的度数即为依附于它的边的总数。
-
-
-在图中，路径是由边顺序连接的一系列顶点。
-简单路径是一条没有重复顶点的路径。
-环是一条至少含有一条边且起点和终点相同的路径。
-简单环是一条（除了起点和终点必须相同之外）不含有重复顶点和边的环。
-路径或者环的长度为其中所包含的边数。
-
-如果从任意一个顶点都存在一条路径到达另一个任意顶点，我们称这幅图是连通图。
-
+无向图
 
 created at 2025/4/16
 """
@@ -40,7 +18,7 @@ class BagIterator:
         return self
 
     def __next__(self):
-        if not self.start:
+        if self.start is None:
             raise StopIteration
         _item = self.start.value
         self.start = self.start.next
@@ -84,12 +62,31 @@ class Bag:
 
 
 class Graph:
+    """
+    接邻表
+
+    所有顶点保存为一个主列表。
+    为每个顶点对象都维护一个列表，其中记录了与它相连的顶点。
+    {V, weight}
+
+    一般使用0至V-1来表示一张含有V个顶点的图中的各个顶点
+
+
+    """
+
     V = 0  # 顶点数
     E = 0  # 边的数量
-    adj: list[Bag] = None  # 接邻表
+    adj: list[Bag]  # 接邻表
+
+    # def __init__(self):
+    #     raise NotImplementedError("can't directly create Graph instance")
 
     @classmethod
     def create_graph_from_vertices(cls, v: int):
+        """
+        8个顶点就是 0-7.
+
+        """
         if v < 0:
             raise ValueError("Number of vertices must be non-negative")
         obj = cls()
@@ -104,6 +101,15 @@ class Graph:
 
     @classmethod
     def create_graph_from_text(cls, filename) -> "Graph":
+        """
+        格式:
+            顶点数  如 15, 那么v 和 w的取值范围只能是0-14
+            边的数
+            v -> w
+            v -> w
+
+        """
+
         obj = cls()
 
         with open(filename, mode="r", encoding="utf8") as fp:
@@ -163,6 +169,11 @@ class Graph:
         return string
 
     def to_dot(self):
+        """
+        dot input.dot -Tsvg -o output.svg
+        dot input.dot -Tpdf -o output.pdf
+
+        """
         str_list = list()
         str_list.append("graph {")
         str_list.append("\n")
@@ -184,8 +195,14 @@ class Graph:
 
         return "".join(str_list)
 
+    def get_v(self):
+        return self.V
+
+    def get_e(self):
+        return self.E
+
 
 if __name__ == "__main__":
     # graph = Graph.create_graph_from_vertices(10)
-    graph = Graph.create_graph_from_text("tinyG.txt")
+    graph = Graph.create_graph_from_text("data/tinyG.txt")
     print(graph)
