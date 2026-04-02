@@ -1,4 +1,4 @@
-# Generated from D:/Code/python/daily_collections/python/learn_records/anltr4/Demo1/Hello.g4 by ANTLR 4.13.2
+# Generated from Hello.g4 by ANTLR 4.13.2
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -66,12 +66,6 @@ class HelloParser ( Parser ):
         def exitRule(self, listener:ParseTreeListener):
             if hasattr( listener, "exitS" ):
                 listener.exitS(self)
-
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitS" ):
-                return visitor.visitS(self)
-            else:
-                return visitor.visitChildren(self)
 
 
 

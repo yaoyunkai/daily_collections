@@ -1,4 +1,4 @@
-# Generated from D:/Code/python/daily_collections/python/learn_records/anltr4/Demo1/Hello.g4 by ANTLR 4.13.2
+# Generated from Hello.g4 by ANTLR 4.13.2
 from antlr4 import *
 from io import StringIO
 import sys
