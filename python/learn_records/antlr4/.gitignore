@@ -1,0 +1,3 @@
+# 忽略 ANTLR 生成的中间文件
+*.tokens
+*.interp
