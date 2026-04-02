@@ -47,8 +47,8 @@ async def parse(url: str, session: ClientSession, **kwargs) -> set:
     try:
         html = await fetch_html(url=url, session=session, **kwargs)
     except (
-            aiohttp.ClientError,
-            aiohttp.http_exceptions.HttpProcessingError,
+        aiohttp.ClientError,
+        aiohttp.http_exceptions.HttpProcessingError,
     ) as e:
         logger.error(
             "aiohttp exception for %s [%s]: %s",
@@ -58,9 +58,7 @@ async def parse(url: str, session: ClientSession, **kwargs) -> set:
         )
         return found
     except Exception as e:
-        logger.exception(
-            "Non-aiohttp exception occured:  %s", getattr(e, "__dict__", {})
-        )
+        logger.exception("Non-aiohttp exception occured:  %s", getattr(e, "__dict__", {}))
         return found
     else:
         for link in HREF_RE.findall(html):
@@ -75,7 +73,7 @@ async def parse(url: str, session: ClientSession, **kwargs) -> set:
         return found
 
 
-async def write_one(file: IO, url: str, **kwargs) -> None:
+async def write_one(file, url: str, **kwargs) -> None:
     """Write the found HREFs from `url` to `file`."""
     res = await parse(url=url, **kwargs)
     if not res:
@@ -91,9 +89,7 @@ async def bulk_crawl_and_write(file: IO, urls: set, **kwargs) -> None:
     async with ClientSession() as session:
         tasks = []
         for url in urls:
-            tasks.append(
-                write_one(file=file, url=url, session=session, **kwargs)
-            )
+            tasks.append(write_one(file=file, url=url, session=session, **kwargs))
         await asyncio.gather(*tasks)
 
 

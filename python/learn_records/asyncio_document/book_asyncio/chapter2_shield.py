@@ -5,6 +5,7 @@
 """
 
 import asyncio
+
 from utils import delay
 
 
@@ -13,12 +14,12 @@ async def main():
 
     try:
         result = await asyncio.wait_for(asyncio.shield(task), 5)
-        print(result)
+        print(result)  # not run
     except asyncio.TimeoutError:
         print("Task took longer than five seconds!")
         result = await task
         print(result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

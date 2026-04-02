@@ -21,5 +21,5 @@ async def main1():
     await sleep_once_more
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main1())

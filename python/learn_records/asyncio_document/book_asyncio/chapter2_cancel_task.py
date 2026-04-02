@@ -1,3 +1,11 @@
+"""
+task 可以 Cancel
+
+task.done
+    .cancel
+
+"""
+
 import asyncio
 
 from utils import delay
@@ -9,7 +17,7 @@ async def main():
     seconds_elapsed = 0
 
     while not long_task.done():
-        print('Task not finished, checking again in a second.')
+        print("Task not finished, checking again in a second.")
         await asyncio.sleep(1)
         seconds_elapsed = seconds_elapsed + 1
         if seconds_elapsed == 5:
@@ -18,7 +26,7 @@ async def main():
     try:
         await long_task
     except asyncio.CancelledError:
-        print('Our task was cancelled')
+        print("Our task was cancelled")
 
 
 asyncio.run(main())

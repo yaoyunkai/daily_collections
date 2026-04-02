@@ -7,10 +7,11 @@
 
 Created at 2023/3/27
 """
+
 import math
 
 
-class lazyproperty:
+class lazyproperty:  # noqa: N801
     def __init__(self, func):
         self.func = func
 
@@ -30,16 +31,16 @@ class Circle:
 
     @lazyproperty
     def area(self):
-        print('Computing area')
-        return math.pi * self.radius ** 2
+        print("Computing area")
+        return math.pi * self.radius**2
 
     @lazyproperty
     def perimeter(self):
-        print('Computing perimeter')
+        print("Computing perimeter")
         return 2 * math.pi * self.radius
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     c = Circle(4)
     print(c.radius)
     print(c.area)

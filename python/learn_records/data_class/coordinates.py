@@ -8,7 +8,7 @@ import typing
 
 
 def usage_of_namedtuple():
-    Coordinate1 = typing.NamedTuple("Coordinate1", lat=float, lon=float)
+    Coordinate1 = typing.NamedTuple("Coordinate1", lat=float, lon=float)  # noqa: N806
     print(typing.get_type_hints(Coordinate1))
 
     pos0 = Coordinate1(12.34, 12.12)

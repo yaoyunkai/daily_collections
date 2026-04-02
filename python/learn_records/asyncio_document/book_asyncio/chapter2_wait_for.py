@@ -10,9 +10,9 @@ async def main():
         result = await asyncio.wait_for(delay_task, timeout=1)
         print(result)
     except asyncio.TimeoutError:
-        print('got a timeout')
-        print(f'Was the task cancelled? {delay_task.cancelled()}')
+        print("got a timeout")
+        print(f"Was the task cancelled? {delay_task.cancelled()}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())
