@@ -1,4 +1,4 @@
-import sys
+import sys  # noqa
 
 from antlr4 import *  # noqa: F403
 from ExprLexer import ExprLexer
@@ -13,7 +13,11 @@ class EvalVisitor(ExprVisitor):
 
     # 提取数字
     def visitNumber(self, ctx: ExprParser.NumberContext):
-        return float(ctx.NUMBER().getText())
+        val = ctx.NUMBER().getText()
+        if "." in val:
+            return float(val)
+        else:
+            return int(val)
 
     # 处理括号 ()
     def visitParens(self, ctx: ExprParser.ParensContext):
@@ -66,9 +70,9 @@ class EvalVisitor(ExprVisitor):
 
 def evaluate_expression(expression: str):
     """封装解析与计算过程"""
-    input_stream = InputStream(expression)
+    input_stream = InputStream(expression)  # noqa: F405
     lexer = ExprLexer(input_stream)
-    stream = CommonTokenStream(lexer)
+    stream = CommonTokenStream(lexer)  # noqa: F405
     parser = ExprParser(stream)
 
     # 解析入口为 prog
@@ -94,7 +98,8 @@ if __name__ == "__main__":
         "89.4%44.2",  # 小数求余
         "-67.45^4%",  # 综合：一元负号、小数、指数、百分比
         "2 * (3 + 5) % 3",  # 综合：优先级测试
-        "34-45 *",
+        # "34-45 *",
+        "2^6 + (78*78-9) ^ 2",
     ]
 
     print("=== 表达式计算结果 ===")
