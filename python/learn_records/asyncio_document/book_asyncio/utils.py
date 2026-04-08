@@ -27,3 +27,9 @@ def async_timed():
         return wrapped
 
     return wrapper
+
+
+async def fetch_status(session, url, _delay=0):
+    await asyncio.sleep(_delay)
+    async with session.get(url) as result:
+        return result.status
