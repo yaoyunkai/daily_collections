@@ -142,6 +142,7 @@ def get_demo_data1():
 
 
 if __name__ == "__main__":
-    Base.metadata.create_all(engine)
+    # Base.metadata.create_all(engine)
     # get_utc_current()
     # get_demo_data1()
+    create_demo_data()

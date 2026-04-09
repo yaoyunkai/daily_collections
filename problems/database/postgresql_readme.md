@@ -330,3 +330,14 @@ stmt4 = select(Simple1).where(
 - **原理解释**：决定了数据库如何**识别和分类字符**。比如，执行 `UPPER('a')` 时，数据库怎么知道 `'a'` 的大写是 `'A'`？在使用正则表达式时，什么算作“字母”，什么算作“数字”？
 - **最佳实践**：这个参数**必须与 Collation 保持一致**。如果您在 Collation 填了 `C`，这里也必须填 `C`。如果填了 `en_US.utf8`，这里也一样。
 
+----
+
+在 PostgreSQL 中，创建数据库时 `collation` 和 `character type` 对应的实际参数是 **`LC_COLLATE`** 和 **`LC_CTYPE`**。
+
+- collation:影响 `ORDER BY`、`WHERE col = 'xxx'`、`< > <= >=` 等文本比较操作。
+- cahracter type: 影响大小写转换函数：`UPPER()`、`LOWER()`、`INITCAP()` , 影响字符判断函数：`ISALPHA()`、`ISDIGIT()`、`ISUPPER()` 等
+
+```sql
+SELECT datname, datcollate, datctype FROM pg_database WHERE datname = current_database();
+```
+
