@@ -299,6 +299,8 @@ stmt4 = select(Simple1).where(
   - `FILE_COPY`：直接在操作系统层面复制底层文件。**优点**：速度极快。**缺点**：复制期间会锁定模板数据库，不允许其他操作。
 - **最佳实践**：保持默认 `WAL_LOG`。
 
+----
+
 这四个参数 (`encoding`, `locale provider`, `collation`, `character type`) 是高度绑定的，它们共同决定了您的数据库如何认识和处理文字。
 
 ### Encoding (字符集编码)
