@@ -22,8 +22,8 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import mapped_column
 
-DATABASE_URL = "postgresql+psycopg2://test1:test1@localhost:5432/demo1"
-engine = create_engine(DATABASE_URL, echo=True)
+DATABASE_URL = "postgresql+psycopg://test1:test1@localhost:5432/demo1"
+engine = create_engine(DATABASE_URL, echo=False)
 
 
 class ParamException(BaseException):
