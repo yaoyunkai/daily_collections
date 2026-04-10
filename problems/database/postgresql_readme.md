@@ -341,3 +341,20 @@ stmt4 = select(Simple1).where(
 SELECT datname, datcollate, datctype FROM pg_database WHERE datname = current_database();
 ```
 
+## 如何查看某个database的相关属性
+
+```sql
+SELECT datname, 
+       pg_encoding_to_char(encoding) AS encoding, 
+       datcollate, 
+       datctype 
+FROM pg_database 
+WHERE datname = 'template1';
+```
+
+如何查看数据库支持的collation：
+
+```sql
+SELECT * FROM pg_collation where collname like 'zh-%';
+```
+
