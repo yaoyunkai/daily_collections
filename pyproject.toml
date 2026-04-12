@@ -40,6 +40,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ruff>=0.15.8",
+    "sqlacodegen>=4.0.3",
 ]
 
 [tool.ruff]
