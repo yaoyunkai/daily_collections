@@ -33,71 +33,20 @@ inspection for table
 created at 2026-04-09
 """
 
-from datetime import date, datetime
-from enum import StrEnum
+from datetime import date
 from pprint import pprint
-from typing import Optional, Sequence
+from typing import Sequence
 
 import pendulum
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, asc, create_engine, func, select
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+from sqlalchemy import asc, create_engine, desc, func, select, text
+from sqlalchemy.orm import Session
+from tables import GenderType, Person, Post, PostStatus
 
 engine = create_engine(
     "postgresql+psycopg://test1:test1@localhost:5432/demo1",
     connect_args={"options": "-c timezone=UTC", "connect_timeout": 3},
     echo=True,
 )
-
-
-class PostStatus(StrEnum):
-    Draft = "S"
-    ToReview = "T"
-    Done = "D"
-
-
-class GenderType(StrEnum):
-    Unknown = "N"
-    Man = "M"
-    Woman = "W"
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-class Person(Base):
-    __tablename__ = "person"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(50, "en-US-x-icu"), nullable=False)
-    gender: Mapped[GenderType] = mapped_column(
-        String(1),
-        nullable=False,
-        default=GenderType.Unknown,
-        server_default=GenderType.Unknown.value,
-    )
-    created_at: Mapped[datetime] = mapped_column(DateTime(True), nullable=False, server_default=func.now())
-    birthday: Mapped[Optional[date]] = mapped_column(Date)
-
-    # posts: Mapped[list["Posts"]] = relationship("Posts", back_populates="person")
-
-
-class Posts(Base):
-    __tablename__ = "posts"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    person_id: Mapped[int] = mapped_column(ForeignKey("person.id"))
-    title: Mapped[str] = mapped_column(String(100, "zh-Hans-CN-x-icu"), nullable=False)
-    content: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[PostStatus] = mapped_column(
-        String(1),
-        nullable=False,
-        default=PostStatus.Draft,
-        server_default=PostStatus.Draft.value,
-    )
-    created_at: Mapped[datetime] = mapped_column(DateTime(True), nullable=False, server_default=func.now())
-
-    # person: Mapped["Person"] = relationship("Person", back_populates="posts")
 
 
 def get_current_time():
@@ -113,22 +62,68 @@ def create_demo_persons():
         session.commit()
 
 
+def get_first_person_id_by_name(person_name: str, session: Session):
+    stmt = select(Person.id).where(Person.name == person_name).order_by(desc(Person.created_at))
+    return session.scalars(stmt).first()
+
+
+def create_demo_posts():
+    with Session(engine) as session:
+        p_tom = get_first_person_id_by_name("Tom", session)
+        p_peter = get_first_person_id_by_name("Peter", session)
+        p_lily = get_first_person_id_by_name("Lily", session)
+
+        if p_tom:
+            post1 = Post(title="这是第一个标题", content="aaaaaaaaaaaaaaaaaaaaaaaaaaa", person_id=p_tom)
+            post2 = Post(title="这是第二个标题", content="bbbbbbbbbbbbbbbbbbbbbbbbbbbbb", person_id=p_tom)
+            session.add(post1)
+            session.add(post2)
+
+        if p_peter:
+            post3 = Post(title="这是第3个标题", content="cccccccccccccc", person_id=p_peter)
+            post4 = Post(title="这是第4个标题", content="ddddddddddd", person_id=p_peter)
+            session.add(post3)
+            session.add(post4)
+
+        if p_lily:
+            post5 = Post(title="这是第5个标题", content="eeeeeeeeeeeeeeeeeeeeeeeeeee", person_id=p_lily)
+            post6 = Post(title="这是第6个标题", content="ffffffffffffffffffffffff", person_id=p_lily)
+            session.add(post5)
+            session.add(post6)
+
+        session.commit()
+
+
 def get_all_person():
     stmt = select(Person).order_by(asc(Person.name))
 
     with Session(engine) as session:
         for row in session.scalars(stmt):
             pprint(row.name)
-            # pprint(row.posts)
 
 
-def get_posts_by_person(person_id: int | Person) -> Sequence["Posts"]:
-    target_id = person_id.id if isinstance(person_id, Person) else person_id
-    stmt = select(Posts).where(Posts.person_id == target_id)
-    with Session(engine) as session:
-        return session.scalars(stmt).all()
+def get_post_count(session: Session, person_id: int) -> int:
+    stmt = select(func.count().label("post_count")).where(Post.person_id == person_id)
+    return session.execute(stmt).scalar_one()
+
+
+def get_recent_status_s_posts(session: Session) -> Sequence[Post]:
+    stmt = (
+        select(Post)
+        .where(Post.status == PostStatus.Draft, Post.created_at >= text("now() - interval '2 months'"))
+        .order_by(Post.created_at.desc())
+    )
+    return session.scalars(stmt).all()
 
 
 if __name__ == "__main__":
     # create_demo_persons()
-    get_all_person()
+    # get_all_person()
+
+    # ret = get_post_count(Session(engine), 5)
+    # print(ret)
+
+    # for row in get_recent_status_s_posts(Session(engine)):
+    #     print(row)
+
+    pass
