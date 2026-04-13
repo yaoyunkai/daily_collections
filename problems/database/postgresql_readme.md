@@ -1,6 +1,6 @@
 # PostgreSQL
 
-table inspection:
+## table inspection
 
 ```sql
 \d+ your_table_name
@@ -45,11 +45,11 @@ for col in columns:
 # indexes = inspector.get_indexes("orders")
 ```
 
-## python client
+### python client
 
 Psycopg 3 和 Psycopg 2.
 
-## datetime 字段。
+## datetime 字段
 
 在数据库层面设置了 `timestamp with time zone` 后，**在 Python 代码中插入或更新数据时，需要传入“带时区信息”（Timezone-aware）的 `datetime` 对象**。
 
@@ -222,7 +222,7 @@ status: Mapped[OrderStatus] = mapped_column(
 
 在 SQLAlchemy 生态中，处理数据库结构增量更新：**Alembic**。
 
-## 数据库优先的模式
+## 数据库优先的模式(从db生成sqlalchemy表结构)
 
 **推荐工具：`sqlacodegen`** 这是一个非常强大的开源工具。
 
@@ -340,6 +340,20 @@ stmt4 = select(Simple1).where(
 ```sql
 SELECT datname, datcollate, datctype FROM pg_database WHERE datname = current_database();
 ```
+
+### ** encoding, LC_CTYPE & LC_COLLATE
+
+> **`ENCODING` 决定“字符怎么变成字节存进去”，`LC_CTYPE` 决定“这个字符属于什么类别（字母/数字/空格/标点），以及大小写怎么转换”。**
+
+| 设置         | 底层作用                  | 依赖组件                             | 影响范围                                                     |
+| ------------ | ------------------------- | ------------------------------------ | ------------------------------------------------------------ |
+| `ENCODING`   | 字符 ↔ 字节序列的映射规则 | PG 内部编码转换器                    | 存储合法性、网络传输、客户端解码                             |
+| `LC_CTYPE`   | 字符分类 & 大小写变形     | 操作系统 C 库（`glibc` 等）的 locale | `UPPER/LOWER`、正则分类 `\w`/`[:alpha:]`、单词边界、IS ALPHA 等 |
+| `LC_COLLATE` | 字符串排序 & 比较规则     | 操作系统 C 库的 locale               | `ORDER BY`、`=`/`<`/`>`、索引扫描、`LIKE` 行为               |
+
+**LC_CTYPE 影响了什么东西**
+
+PostgreSQL 自身不实现字符分类逻辑，而是将字符串交给操作系统的 LC_CTYPE locale，调用 C 标准库函数（如 `iswalpha()`, `towlower()`, `iswdigit()` 等）。
 
 ## 如何查看某个database的相关属性
 
