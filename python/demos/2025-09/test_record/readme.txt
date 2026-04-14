@@ -78,6 +78,8 @@ CREATE INDEX idx_test_record_created_at_brin
 
 数据有可能延迟的情况下。
 附带额外的record_time, 每隔一段时间执行去更新 first_pass_flag.
+超过30分钟的插入失败。
+
 
 CREATE TABLE demo_record (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
