@@ -33,6 +33,7 @@ inspection for table
 created at 2026-04-09
 """
 
+import re
 from datetime import date
 from pprint import pprint
 from typing import Sequence
@@ -40,7 +41,7 @@ from typing import Sequence
 import pendulum
 from sqlalchemy import asc, create_engine, desc, func, select, text
 from sqlalchemy.orm import Session
-from tables import GenderType, Person, Post, PostStatus
+from tables import DummyArticle, GenderType, Person, Post, PostStatus
 
 engine = create_engine(
     "postgresql+psycopg://test1:test1@localhost:5432/demo1",
@@ -102,28 +103,78 @@ def get_all_person():
             pprint(row.name)
 
 
-def get_post_count(session: Session, person_id: int) -> int:
-    stmt = select(func.count().label("post_count")).where(Post.person_id == person_id)
-    return session.execute(stmt).scalar_one()
+def get_all_articles(session: Session):
+    stmt = select(DummyArticle).order_by(DummyArticle.id.desc())
+    return session.scalars(stmt).all()
 
 
-def get_recent_status_s_posts(session: Session) -> Sequence[Post]:
-    stmt = (
-        select(Post)
-        .where(Post.status == PostStatus.Draft, Post.created_at >= text("now() - interval '2 months'"))
-        .order_by(Post.created_at.desc())
+def get_post_count_by_person(session: Session, person_id: int) -> int:
+    stmt = select(func.count(Post.id)).where(Post.person_id == person_id)
+    return session.scalar(stmt) or 0
+
+
+def get_draft_posts_last_two_months(session: Session) -> Sequence[Post]:
+    stmt = select(Post).where(
+        Post.status == PostStatus.Draft,
+        Post.created_at >= text("NOW() - INTERVAL '2 months'"),
     )
     return session.scalars(stmt).all()
 
 
+def get_person_ids_with_most_posts(session: Session) -> list[int]:
+    # 1. 构建 CTE：统计每个人的文章数并计算排名 (rnk)
+    cte = (
+        select(
+            Person.id.label("person_id"),
+            # 使用 rank() 窗口函数处理并列第一的情况
+            func.rank().over(order_by=func.count(Post.id).desc()).label("rnk"),
+        )
+        .outerjoin(Person.post)
+        .group_by(Person.id)
+        .cte("ranked_persons")
+    )
+
+    # 2. 主查询：直接从 CTE 中查出排名第一 (rnk == 1) 的 person_id
+    stmt = select(cte.c.person_id).where(cte.c.rnk == 1)
+
+    # session.scalars() 专门用于提取单列结果，.all() 将其转换为普通的 Python 列表 (例如: [1, 3, 5])
+    return list(session.scalars(stmt).all())
+
+
+def get_person_with_latest_draft(session: Session) -> Person | None:
+    stmt = (
+        select(Person)
+        .join(Person.post)  # 关联 Post 表
+        .where(Post.status == PostStatus.Draft)  # 筛选状态为草稿 (Draft) 的文章
+        .order_by(Post.created_at.desc())  # 按文章创建时间降序排列 (最近的排在最前)
+        .limit(1)  # 只取最新的一条
+    )
+
+    # session.scalar() 返回单个 Person 对象；如果没有草稿记录，则优雅地返回 None
+    return session.scalar(stmt)
+
+
+def update_article_content_and_tags(session: Session, article_id: int, new_content: str):
+    """
+    如果要使用 # , 需要转义 \#
+
+    """
+    article = session.get(DummyArticle, article_id)
+    if not article:
+        return None
+
+    extracted_tags = re.findall(r"#(\w+)\s", new_content)
+
+    article.content = new_content
+    article.tags = list(set(extracted_tags))
+    session.commit()
+    return article
+
+
 if __name__ == "__main__":
-    # create_demo_persons()
-    # get_all_person()
+    """
+    output something
 
-    # ret = get_post_count(Session(engine), 5)
+    """
+    # ret = get_all_articles(Session(engine))
     # print(ret)
-
-    # for row in get_recent_status_s_posts(Session(engine)):
-    #     print(row)
-
-    pass
