@@ -18,8 +18,7 @@ from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-import schema
-from schema import TestRecord
+from test_record import TestRecord
 
 SEPARATOR = ','
 
