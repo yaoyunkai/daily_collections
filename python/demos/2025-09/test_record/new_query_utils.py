@@ -9,7 +9,7 @@ created at 2026-04-15
 """
 
 from data_utils import ENGINE
-from objprint import op
+from QueryExpr.runner import parse_query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from test_record import TestRecord
@@ -26,5 +26,5 @@ class Querying(object):
 
 if __name__ == "__main__":
     query = Querying(ENGINE)
-    for ret in query.get_test_record_by_sernum("FCW2845Y0BK"):
-        op(ret)
+    ret = parse_query("IE-3500-8P2S-E,IEM-3500-16P=")
+    print(ret)

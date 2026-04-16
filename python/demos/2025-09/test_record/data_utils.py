@@ -38,12 +38,12 @@ KEY_MAPPING: List[Tuple[str, str, Any, Callable | None]] = [
     ("test_container", "attributes/CONTAINER", "", None),
     ("test_mode", "test_mode", "PROD0", None),
     ("deviation", "attributes/DEVIATION", "D000000", None),
-    ("testr1name", "attributes/TESTR1NAME", "", None),
-    ("testr1", "attributes/TESTR1", "", None),
-    ("testr2name", "attributes/TESTR2NAME", "", None),
-    ("testr2", "attributes/TESTR2", "", None),
-    ("testr3name", "attributes/TESTR3NAME", "", None),
-    ("testr3", "attributes/TESTR3", "", None),
+    ("testr1name", "attributes/TESTR1NAME", None, None),
+    ("testr1", "attributes/TESTR1", None, None),
+    ("testr2name", "attributes/TESTR2NAME", None, None),
+    ("testr2", "attributes/TESTR2", None, None),
+    ("testr3name", "attributes/TESTR3NAME", None, None),
+    ("testr3", "attributes/TESTR3", None, None),
 ]
 
 
@@ -98,3 +98,5 @@ if __name__ == "__main__":
     """
     noting
     """
+    # save_json_file_to_db(Session(ENGINE), "data/Sonic test record original 2024-12.json")
+    # call_pg_func_reflash_fp_flag(Session(ENGINE))

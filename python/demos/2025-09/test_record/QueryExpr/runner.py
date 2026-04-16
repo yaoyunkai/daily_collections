@@ -2,9 +2,15 @@ import enum
 import re
 
 from antlr4 import CommonTokenStream, InputStream
-from QueryLexer import QueryLexer
-from QueryParser import QueryParser
-from QueryVisitor import QueryVisitor
+
+if "." in __name__:
+    from .QueryLexer import QueryLexer
+    from .QueryParser import QueryParser
+    from .QueryVisitor import QueryVisitor
+else:
+    from QueryLexer import QueryLexer
+    from QueryParser import QueryParser
+    from QueryVisitor import QueryVisitor
 
 
 class QMode(enum.StrEnum):

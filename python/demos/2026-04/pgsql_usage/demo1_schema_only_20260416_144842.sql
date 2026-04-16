@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict PqLm15GWudoH0Zyu6CFIZgiAktGO52ndApgx9WmdDv37wfHRtFnBKAXesrAUt6s
+\restrict OOigdMfLZhNypb1SLToT7F1JafJtc0vhkjOTSJHaG5ezOrpA8wMH45CC2kUY4sO
 
 -- Dumped from database version 16.13
 -- Dumped by pg_dump version 16.13
@@ -19,7 +19,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: refresh_first_pass_flag(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: refresh_first_pass_flag(); Type: FUNCTION; Schema: public; Owner: test1
 --
 
 CREATE FUNCTION public.refresh_first_pass_flag() RETURNS void
@@ -27,13 +27,13 @@ CREATE FUNCTION public.refresh_first_pass_flag() RETURNS void
     AS $$
 BEGIN
     WITH
-    -- 步骤 1：精准找出哪些“组”有新数据
+    -- 步骤 1: 精准找出哪些"组"有新数据
     TouchedGroups AS (
         SELECT DISTINCT sernum, test_area
         FROM test_record
         WHERE first_pass_flag = -1
     ),
-    -- 步骤 2：把这些组内的【所有数据】重新按业务时间排序计算
+    -- 步骤 2: 把这些组内的 (所有数据) 重新按业务时间排序计算
     CalculatedFlags AS (
         SELECT
             d.id,
@@ -48,19 +48,19 @@ BEGIN
         INNER JOIN TouchedGroups tg
             ON d.sernum = tg.sernum AND d.test_area = tg.test_area
     )
-    -- 步骤 3：智能更新回主表
+    -- 步骤 3: 智能更新回主表
     UPDATE test_record d
     SET first_pass_flag = c.correct_flag
     FROM CalculatedFlags c
     WHERE d.id = c.id
-      -- 【极其重要】只更新状态发生变化的数据！
+      -- 只更新状态发生变化的数据！
       -- 这不仅会把 -1 变成 1 或 0，还会把因为乱序导致算错的历史 1 自动纠正为 0
       AND d.first_pass_flag IS DISTINCT FROM c.correct_flag;
 END;
 $$;
 
 
-ALTER FUNCTION public.refresh_first_pass_flag() OWNER TO postgres;
+ALTER FUNCTION public.refresh_first_pass_flag() OWNER TO test1;
 
 SET default_tablespace = '';
 
@@ -214,7 +214,7 @@ ALTER SEQUENCE public.post_id_seq OWNED BY public.post.id;
 --
 
 CREATE TABLE public.test_record (
-    id bigint NOT NULL,
+    id integer NOT NULL,
     record_time timestamp with time zone NOT NULL,
     sernum character varying(50) NOT NULL,
     uuttype character varying(50) NOT NULL,
@@ -244,14 +244,22 @@ ALTER TABLE public.test_record OWNER TO test1;
 -- Name: test_record_id_seq; Type: SEQUENCE; Schema: public; Owner: test1
 --
 
-ALTER TABLE public.test_record ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.test_record_id_seq
+CREATE SEQUENCE public.test_record_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1
-);
+    CACHE 1;
+
+
+ALTER SEQUENCE public.test_record_id_seq OWNER TO test1;
+
+--
+-- Name: test_record_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: test1
+--
+
+ALTER SEQUENCE public.test_record_id_seq OWNED BY public.test_record.id;
 
 
 --
@@ -273,6 +281,13 @@ ALTER TABLE ONLY public.person ALTER COLUMN id SET DEFAULT nextval('public.perso
 --
 
 ALTER TABLE ONLY public.post ALTER COLUMN id SET DEFAULT nextval('public.post_id_seq'::regclass);
+
+
+--
+-- Name: test_record id; Type: DEFAULT; Schema: public; Owner: test1
+--
+
+ALTER TABLE ONLY public.test_record ALTER COLUMN id SET DEFAULT nextval('public.test_record_id_seq'::regclass);
 
 
 --
@@ -308,17 +323,17 @@ ALTER TABLE ONLY public.test_record
 
 
 --
--- Name: idx_demo_record_calc; Type: INDEX; Schema: public; Owner: test1
+-- Name: idx_test_record_calc; Type: INDEX; Schema: public; Owner: test1
 --
 
-CREATE INDEX idx_demo_record_calc ON public.test_record USING btree (sernum, test_area, record_time);
+CREATE INDEX idx_test_record_calc ON public.test_record USING btree (sernum, test_area, record_time);
 
 
 --
--- Name: idx_demo_record_unprocessed; Type: INDEX; Schema: public; Owner: test1
+-- Name: idx_test_record_unprocessed; Type: INDEX; Schema: public; Owner: test1
 --
 
-CREATE INDEX idx_demo_record_unprocessed ON public.test_record USING btree (first_pass_flag) WHERE (first_pass_flag = '-1'::integer);
+CREATE INDEX idx_test_record_unprocessed ON public.test_record USING btree (first_pass_flag) WHERE (first_pass_flag = '-1'::integer);
 
 
 --
@@ -340,5 +355,5 @@ ALTER TABLE ONLY public.post
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PqLm15GWudoH0Zyu6CFIZgiAktGO52ndApgx9WmdDv37wfHRtFnBKAXesrAUt6s
+\unrestrict OOigdMfLZhNypb1SLToT7F1JafJtc0vhkjOTSJHaG5ezOrpA8wMH45CC2kUY4sO
 
