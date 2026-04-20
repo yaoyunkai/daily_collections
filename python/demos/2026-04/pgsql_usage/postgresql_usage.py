@@ -33,15 +33,13 @@ inspection for table
 created at 2026-04-09
 """
 
-import re
-from datetime import date
 from pprint import pprint
-from typing import Sequence
+from typing import Optional
 
 import pendulum
-from sqlalchemy import asc, create_engine, desc, func, select, text
+from sqlalchemy import asc, create_engine, func, select
 from sqlalchemy.orm import Session
-from tables import DummyArticle, GenderType, Person, Post, PostStatus
+from tables import Base, Person, Post, PostStatus
 
 engine = create_engine(
     "postgresql+psycopg://test1:test1@localhost:5432/demo1",
@@ -50,49 +48,12 @@ engine = create_engine(
 )
 
 
+def create_tables(eng):
+    Base.metadata.create_all(eng)
+
+
 def get_current_time():
     return pendulum.now()
-
-
-def create_demo_persons():
-    with Session(engine) as session:
-        obj1 = Person(name="Tom", gender=GenderType.Man, birthday=date(2001, 4, 6))
-        obj2 = Person(name="Peter", gender=GenderType.Man, birthday=date(1997, 3, 3))
-        obj3 = Person(name="Lily", gender=GenderType.Woman, birthday=date(1989, 6, 23))
-        session.add_all([obj1, obj2, obj3])
-        session.commit()
-
-
-def get_first_person_id_by_name(person_name: str, session: Session):
-    stmt = select(Person.id).where(Person.name == person_name).order_by(desc(Person.created_at))
-    return session.scalars(stmt).first()
-
-
-def create_demo_posts():
-    with Session(engine) as session:
-        p_tom = get_first_person_id_by_name("Tom", session)
-        p_peter = get_first_person_id_by_name("Peter", session)
-        p_lily = get_first_person_id_by_name("Lily", session)
-
-        if p_tom:
-            post1 = Post(title="这是第一个标题", content="aaaaaaaaaaaaaaaaaaaaaaaaaaa", person_id=p_tom)
-            post2 = Post(title="这是第二个标题", content="bbbbbbbbbbbbbbbbbbbbbbbbbbbbb", person_id=p_tom)
-            session.add(post1)
-            session.add(post2)
-
-        if p_peter:
-            post3 = Post(title="这是第3个标题", content="cccccccccccccc", person_id=p_peter)
-            post4 = Post(title="这是第4个标题", content="ddddddddddd", person_id=p_peter)
-            session.add(post3)
-            session.add(post4)
-
-        if p_lily:
-            post5 = Post(title="这是第5个标题", content="eeeeeeeeeeeeeeeeeeeeeeeeeee", person_id=p_lily)
-            post6 = Post(title="这是第6个标题", content="ffffffffffffffffffffffff", person_id=p_lily)
-            session.add(post5)
-            session.add(post6)
-
-        session.commit()
 
 
 def get_all_person():
@@ -103,72 +64,98 @@ def get_all_person():
             pprint(row.name)
 
 
-def get_all_articles(session: Session):
-    stmt = select(DummyArticle).order_by(DummyArticle.id.desc())
-    return session.scalars(stmt).all()
+def get_person_by_id(session: Session, person_id: int) -> Optional[Person]:
+    """
+    根据 ID 查询 Person，如果不存在则返回 None。
+    对应 SQL: SELECT * FROM person WHERE id = :person_id;
+    """
+    return session.get(Person, person_id)
 
 
-def get_post_count_by_person(session: Session, person_id: int) -> int:
-    stmt = select(func.count(Post.id)).where(Post.person_id == person_id)
-    return session.scalar(stmt) or 0
-
-
-def get_draft_posts_last_two_months(session: Session) -> Sequence[Post]:
-    stmt = select(Post).where(
-        Post.status == PostStatus.Draft,
-        Post.created_at >= text("NOW() - INTERVAL '2 months'"),
-    )
-    return session.scalars(stmt).all()
-
-
-def get_person_ids_with_most_posts(session: Session) -> list[int]:
-    # 1. 构建 CTE：统计每个人的文章数并计算排名 (rnk)
-    cte = (
-        select(
-            Person.id.label("person_id"),
-            # 使用 rank() 窗口函数处理并列第一的情况
-            func.rank().over(order_by=func.count(Post.id).desc()).label("rnk"),
-        )
-        .outerjoin(Person.post)
-        .group_by(Person.id)
-        .cte("ranked_persons")
+def get_persons_with_most_done_posts(session: Session) -> list[Person]:
+    """
+    查询拥有最多已发布 (Done) 文章的用户。
+    如果有多人并列第一，返回包含这些用户的列表；如果只有一人，也返回列表；
+    如果没有符合条件的数据，返回空列表。
+    """
+    # 1. 创建 CTE（公用表表达式），统计每个 person_id 对应的 Done 状态文章数量
+    post_counts = (
+        select(Post.person_id, func.count(Post.id).label("done_count"))
+        .where(Post.status == PostStatus.Done)
+        .group_by(Post.person_id)
+        .cte("post_counts")
     )
 
-    # 2. 主查询：直接从 CTE 中查出排名第一 (rnk == 1) 的 person_id
-    stmt = select(cte.c.person_id).where(cte.c.rnk == 1)
+    # 2. 创建子查询，获取最大的文章数量
+    max_count_subq = select(func.max(post_counts.c.done_count)).scalar_subquery()
 
-    # session.scalars() 专门用于提取单列结果，.all() 将其转换为普通的 Python 列表 (例如: [1, 3, 5])
+    # 3. 主查询：关联 Person 表，筛选出文章数量等于最大值的用户
+    stmt = (
+        select(Person)
+        .join(post_counts, Person.id == post_counts.c.person_id)
+        .where(post_counts.c.done_count == max_count_subq)
+    )
     return list(session.scalars(stmt).all())
 
 
-def get_person_with_latest_draft(session: Session) -> Person | None:
-    stmt = (
-        select(Person)
-        .join(Person.post)  # 关联 Post 表
-        .where(Post.status == PostStatus.Draft)  # 筛选状态为草稿 (Draft) 的文章
-        .order_by(Post.created_at.desc())  # 按文章创建时间降序排列 (最近的排在最前)
-        .limit(1)  # 只取最新的一条
-    )
-
-    # session.scalar() 返回单个 Person 对象；如果没有草稿记录，则优雅地返回 None
-    return session.scalar(stmt)
-
-
-def update_article_content_and_tags(session: Session, article_id: int, new_content: str):
+def get_recent_undone_posts(session: Session, _limit: int = 20) -> list[Post]:
     """
-    如果要使用 # , 需要转义 \#
-
+    查询状态不是已发布 (Done) 的文章，按创建时间倒序排列，并限制返回数量。
     """
-    article = session.get(DummyArticle, article_id)
-    if not article:
+    stmt = select(Post).where(Post.status != PostStatus.Done).order_by(Post.created_at.desc()).limit(_limit)
+
+    return list(session.scalars(stmt).all())
+
+
+def get_persons_without_posts(session: Session) -> list[Person]:
+    """
+    查询还没有任何文章 (Post) 的用户。
+    对应 SQL: SELECT * FROM person WHERE NOT EXISTS (SELECT 1 FROM post WHERE post.person_id = person.id);
+    """
+    # 使用 ORM 提供的 .any() 方法取反，这是最优雅且高效的写法
+    stmt = select(Person).where(~Person.posts.any())
+
+    return list(session.scalars(stmt).all())
+
+
+def get_all_unique_tags(session: Session) -> list[str]:
+    """
+    获取所有文章中出现过的不重复的标签 (tags)。
+    对应 SQL: SELECT DISTINCT unnest(tags) FROM post;
+    """
+    # 使用 func.unnest 将数组展开为多行，然后使用 distinct 去重
+    stmt = select(func.unnest(Post.tags)).distinct()
+
+    return list(session.scalars(stmt).all())
+
+
+def add_unique_tag_to_post(session: Session, post_id: int, tag: str) -> Optional[Post]:
+    """
+    给指定的文章 (Post) 增加一个标签 (tag)。
+    如果该 tag 已经存在于 tags 列表中，则不做任何操作。
+    """
+    post = session.get(Post, post_id)
+
+    if post and tag not in post.tags:
+        post.tags.append(tag)
+        session.commit()
+
+    return post
+
+
+def get_person_age(session: Session, person_id: int) -> Optional[int]:
+    """
+    获取指定用户的年龄。
+    通过获取用户的 birthday 并在 Python 层进行计算。如果用户不存在或没有设置生日，返回 None。
+    """
+    person = session.get(Person, person_id)
+
+    if person is None or person.birthday is None:
         return None
 
-    extracted_tags = re.findall(r"#(\w+)\s", new_content)
-
-    article.content = new_content
-    article.tags = list(set(extracted_tags))
-    session.commit()
-    return article
+    birthday = person.birthday
+    age = pendulum.datetime(birthday.year, birthday.month, birthday.day).age
+    return age
 
 
 if __name__ == "__main__":
@@ -178,3 +165,6 @@ if __name__ == "__main__":
     """
     # ret = get_all_articles(Session(engine))
     # print(ret)
+    # create_tables(engine)
+    ret = get_person_age(Session(engine), 19)
+    print(ret)

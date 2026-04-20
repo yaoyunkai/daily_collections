@@ -8,7 +8,7 @@ from typing import Any, Callable, List, Tuple
 
 from sqlalchemy import create_engine, insert, text
 from sqlalchemy.orm import Session
-from test_record import TestRecord
+from test_record import PassFail, TestRecord
 
 ENGINE = create_engine(
     "postgresql+psycopg://test1:test1@localhost:5432/demo1",
@@ -18,6 +18,21 @@ ENGINE = create_engine(
 
 
 UNSET = object()
+
+
+def _convert_passfail(value):
+    if value is UNSET:
+        raise ValueError
+    match value.upper():
+        case "P":
+            return PassFail.Pass
+        case "F":
+            return PassFail.Fail
+        case "S":
+            return PassFail.Start
+        case _:
+            return UNSET
+
 
 """
 db key
@@ -31,7 +46,7 @@ KEY_MAPPING: List[Tuple[str, str, Any, Callable | None]] = [
     ("sernum", "sernum", UNSET, None),
     ("uuttype", "uuttype", UNSET, None),
     ("test_area", "area", UNSET, None),
-    ("passfail", "passfail", UNSET, None),
+    ("passfail", "passfail", UNSET, _convert_passfail),
     ("runtime", "attributes/RUNTIME", 0, None),
     ("test_fail", "attributes/TEST", "", None),
     ("test_machine", "machine", "", None),
@@ -98,5 +113,3 @@ if __name__ == "__main__":
     """
     noting
     """
-    # save_json_file_to_db(Session(ENGINE), "data/Sonic test record original 2024-12.json")
-    # call_pg_func_reflash_fp_flag(Session(ENGINE))
