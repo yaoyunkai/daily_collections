@@ -10,9 +10,9 @@ created at 2026-04-15
 
 from datetime import date, datetime
 from enum import Enum
-from pprint import pprint
 from typing import Annotated, Optional
 
+import pandas as pd
 import pendulum
 from data_utils import ENGINE
 from pydantic import BaseModel, BeforeValidator, ConfigDict, field_validator, model_validator
@@ -54,6 +54,17 @@ class YieldSearchIn(BaseModel):
 
     view_type: ViewType = ViewType.NO_DATE
 
+    @model_validator(mode="after")
+    def validate_cross_fields(self):
+        if not any([self.sernum, self.uuttype, self.test_machine, self.test_area]):
+            raise ValueError(
+                "Must provide at least one search parameter: 'sernum', 'uuttype', 'test_machine', or 'test_area'."
+            )
+        if self.start_date > self.end_date:
+            raise ValueError("'start_date' cannot be >= 'end_date'.")
+
+        return self
+
 
 class MultiSearchIn(BaseModel):
     sernum: ParamQueryList = None
@@ -84,6 +95,22 @@ class MultiSearchIn(BaseModel):
             raise ValueError("At least one of 'include_pass', 'include_fail', or 'include_start' must be True.")
 
         return self
+
+
+class YieldMetrics(BaseModel):
+    pass_qty: int = 0
+    fail_qty: int = 0
+    total_qty: int = 0
+    pass_rate: str = "0.00%"
+
+
+class YieldRowOut(BaseModel):
+    date_group: Optional[str] = None  # 新增：用于显示 Week 或 Month
+    uuttype: str
+    avg_yield: str
+    board_qty: int
+    ete_yield: Optional[YieldMetrics] = None
+    areas: dict[str, YieldMetrics]
 
 
 class TestRecordOut(BaseModel):
@@ -142,6 +169,205 @@ class Querying(object):
         rows = self.session.scalars(stmt).all()
         return [TestRecordOut.model_validate(row) for row in rows]
 
+    def get_yield_report_pandas(self, search_params: dict) -> list[YieldRowOut]:
+        """
+        另一个方式: 三份数据（原数据、时间段汇总数据、全局汇总数据）
+
+        """
+        validated_params = YieldSearchIn.model_validate(search_params)
+
+        stmt = select(
+            TestRecord.uuttype,
+            TestRecord.sernum,
+            TestRecord.test_area,
+            TestRecord.passfail,
+            TestRecord.record_time,
+        )
+        stmt = self._make_common_params_stmt(stmt, validated_params)
+        stmt = stmt.where(TestRecord.passfail.in_([PassFail.Pass, PassFail.Fail]))
+
+        df = pd.read_sql(stmt, self.session.bind)
+
+        if df.empty:
+            return []
+
+        df["passfail"] = df["passfail"].apply(lambda x: x.value if hasattr(x, "value") else str(x)).str.lower()
+        df["is_pass"] = (df["passfail"] == "pass").astype(int)
+
+        # 处理 view_type (生成 date_group 列)
+        if validated_params.view_type is ViewType.WEEK:
+            df["date_group"] = df["record_time"].dt.strftime("%G-W%V")
+        elif validated_params.view_type is ViewType.MONTH:
+            df["date_group"] = df["record_time"].dt.strftime("%Y-%m")
+        else:
+            df["date_group"] = "All"
+
+        is_first_pass = validated_params.data_type is DataType.FIRST_PASS
+
+        # ==========================================
+        # 步骤 A: 基础数据统计 (按 date_group + uuttype)
+        # ==========================================
+        base_stats = (
+            df.groupby(["date_group", "uuttype"])
+            .agg(board_qty=("sernum", "nunique"), total_tests=("is_pass", "count"), total_pass=("is_pass", "sum"))
+            .reset_index()
+        )
+
+        base_area = (
+            df.groupby(["date_group", "uuttype", "test_area"])
+            .agg(total_qty=("is_pass", "count"), pass_qty=("is_pass", "sum"))
+            .reset_index()
+        )
+
+        if is_first_pass:
+            base_sernum_ete = df.groupby(["date_group", "uuttype", "sernum"])["is_pass"].min().reset_index()
+            base_ete = (
+                base_sernum_ete.groupby(["date_group", "uuttype"])
+                .agg(ete_total=("is_pass", "count"), ete_pass=("is_pass", "sum"))
+                .reset_index()
+            )
+
+        # ==========================================
+        # 步骤 B: 时间段汇总统计 (仅按 date_group)
+        # ==========================================
+        ds_stats = (
+            df.groupby(["date_group"])
+            .agg(board_qty=("sernum", "nunique"), total_tests=("is_pass", "count"), total_pass=("is_pass", "sum"))
+            .reset_index()
+        )
+        ds_stats["uuttype"] = "Summary"
+
+        ds_area = (
+            df.groupby(["date_group", "test_area"])
+            .agg(total_qty=("is_pass", "count"), pass_qty=("is_pass", "sum"))
+            .reset_index()
+        )
+        ds_area["uuttype"] = "Summary"
+
+        if is_first_pass:
+            ds_sernum_ete = df.groupby(["date_group", "sernum"])["is_pass"].min().reset_index()
+            ds_ete = (
+                ds_sernum_ete.groupby(["date_group"])
+                .agg(ete_total=("is_pass", "count"), ete_pass=("is_pass", "sum"))
+                .reset_index()
+            )
+            ds_ete["uuttype"] = "Summary"
+
+        # ==========================================
+        # 步骤 C: 全局汇总统计 (Grand Total)
+        # ==========================================
+        stats_list = [base_stats, ds_stats]
+        area_list = [base_area, ds_area]
+        ete_list = [base_ete, ds_ete] if is_first_pass else []
+
+        if validated_params.view_type is not ViewType.NO_DATE:
+            # 整体统计 (不分组)
+            gs_stats = pd.DataFrame(
+                [
+                    {
+                        "date_group": "Total",
+                        "uuttype": "Summary",
+                        "board_qty": df["sernum"].nunique(),
+                        "total_tests": len(df),
+                        "total_pass": df["is_pass"].sum(),
+                    }
+                ]
+            )
+
+            gs_area = (
+                df.groupby(["test_area"]).agg(total_qty=("is_pass", "count"), pass_qty=("is_pass", "sum")).reset_index()
+            )
+            gs_area["date_group"] = "Total"
+            gs_area["uuttype"] = "Summary"
+
+            stats_list.append(gs_stats)
+            area_list.append(gs_area)
+
+            if is_first_pass:
+                gs_sernum_ete = df.groupby("sernum")["is_pass"].min().reset_index()
+                gs_ete = pd.DataFrame(
+                    [
+                        {
+                            "date_group": "Total",
+                            "uuttype": "Summary",
+                            "ete_total": len(gs_sernum_ete),
+                            "ete_pass": gs_sernum_ete["is_pass"].sum(),
+                        }
+                    ]
+                )
+                ete_list.append(gs_ete)
+
+        # ==========================================
+        # 步骤 D: 合并所有统计结果
+        # ==========================================
+        final_stats = pd.concat(stats_list, ignore_index=True)
+        final_area = pd.concat(area_list, ignore_index=True)
+
+        # 将工站数据转为嵌套字典以供快速查询: {(date_group, uuttype): {test_area: metrics}}
+        area_dict = (
+            final_area.groupby(["date_group", "uuttype"])
+            .apply(lambda x: x.set_index("test_area").to_dict("index"))
+            .to_dict()
+        )
+
+        ete_dict = {}
+        if is_first_pass:
+            final_ete = pd.concat(ete_list, ignore_index=True)
+            ete_dict = final_ete.set_index(["date_group", "uuttype"]).to_dict("index")
+
+        # ==========================================
+        # 步骤 E: 组装 Pydantic 输出
+        # ==========================================
+        report_rows = []
+        for _, row in final_stats.iterrows():
+            dg = row["date_group"]
+            uut = row["uuttype"]
+
+            # Avg Yield
+            t_tests = row["total_tests"]
+            avg_rate = f"{(row['total_pass'] / t_tests * 100):.2f}%" if t_tests > 0 else "0.00%"
+
+            # Test Area Metrics
+            areas_metrics = {}
+            if (dg, uut) in area_dict:
+                for area, stats in area_dict[(dg, uut)].items():
+                    p_qty = stats["pass_qty"]
+                    t_qty = stats["total_qty"]
+                    f_qty = t_qty - p_qty
+                    rate = f"{(p_qty / t_qty * 100):.2f}%" if t_qty > 0 else "0.00%"
+                    areas_metrics[area] = YieldMetrics(pass_qty=p_qty, fail_qty=f_qty, total_qty=t_qty, pass_rate=rate)
+
+            # ETE Yield
+            ete_metrics = None
+            if is_first_pass and (dg, uut) in ete_dict:
+                e_pass = ete_dict[(dg, uut)]["ete_pass"]
+                e_total = ete_dict[(dg, uut)]["ete_total"]
+                e_fail = e_total - e_pass
+                e_rate = f"{(e_pass / e_total * 100):.2f}%" if e_total > 0 else "0.00%"
+                ete_metrics = YieldMetrics(pass_qty=e_pass, fail_qty=e_fail, total_qty=e_total, pass_rate=e_rate)
+
+            display_dg = dg if validated_params.view_type != ViewType.NO_DATE else None
+
+            report_rows.append(
+                YieldRowOut(
+                    date_group=display_dg,
+                    uuttype=uut,
+                    avg_yield=avg_rate,
+                    board_qty=row["board_qty"],
+                    ete_yield=ete_metrics,
+                    areas=areas_metrics,
+                )
+            )
+
+        # 排序输出
+        def sort_key(x):
+            dg_order = "ZZZZZ" if x.date_group == "Total" else (x.date_group or "")
+            uut_order = "ZZZZZ" if x.uuttype == "Summary" else x.uuttype
+            return (dg_order, uut_order)
+
+        report_rows.sort(key=sort_key)
+        return report_rows
+
     @classmethod
     def _make_common_params_stmt(cls, stmt: "Select", search_object: MultiSearchIn | YieldSearchIn):
         common_query_list = ["sernum", "uuttype", "test_machine", "test_area"]
@@ -187,10 +413,9 @@ if __name__ == "__main__":
     param1 = {
         "sernum": " FCW%",
         "start_date": "2024-11-19",
-        "end_date": "2024-11-20",
-        "include_start": False,
+        "end_date": "2025-02-20",
         "data_type": "test",
+        "view_type": "week",
     }
 
-    ret = query.multi_search_test_record(param1)
-    pprint(ret)
+    ret = query.get_yield_report_pandas(param1)
