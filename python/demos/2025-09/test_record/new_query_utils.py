@@ -14,7 +14,7 @@ from typing import Annotated, Optional
 
 import pandas as pd
 import pendulum
-from data_utils import ENGINE
+from data_utils import ENGINE  # noqa: F401
 from pydantic import BaseModel, BeforeValidator, ConfigDict, field_validator, model_validator
 from QueryExpr.runner import QMode, parse_query
 from sqlalchemy import Select, or_, select
@@ -137,6 +137,9 @@ class TestRecordOut(BaseModel):
 
 
 class Querying(object):
+    S_All = "All"
+    S_Summary = "ZZZ_Summary"
+
     def __init__(self, engine):
         self.session = Session(engine)
 
@@ -200,7 +203,7 @@ class Querying(object):
         elif validated_params.view_type is ViewType.MONTH:
             df["date_group"] = df["record_time"].dt.strftime("%Y-%m")
         else:
-            df["date_group"] = "All"
+            df["date_group"] = self.S_All
 
         is_first_pass = validated_params.data_type is DataType.FIRST_PASS
 
@@ -209,103 +212,93 @@ class Querying(object):
         # ==========================================
         base_stats = (
             df.groupby(["date_group", "uuttype"])
-            .agg(board_qty=("sernum", "nunique"), total_tests=("is_pass", "count"), total_pass=("is_pass", "sum"))
+            .agg(
+                board_qty=("sernum", "nunique"),
+                total_tests=("is_pass", "count"),
+                total_pass=("is_pass", "sum"),
+            )
             .reset_index()
         )
 
-        base_area = (
+        base_stats_area = (
             df.groupby(["date_group", "uuttype", "test_area"])
-            .agg(total_qty=("is_pass", "count"), pass_qty=("is_pass", "sum"))
+            .agg(
+                total_qty=("is_pass", "count"),
+                pass_qty=("is_pass", "sum"),
+            )
             .reset_index()
         )
 
+        # ==========================================
+        # 步骤 B: 全局汇总统计 (Grand Total，不按任何维度分组)
+        # ==========================================
+        # 整体基础统计
+        gs_stats = pd.DataFrame(
+            [
+                {
+                    "date_group": "Total",
+                    "uuttype": self.S_Summary,
+                    "board_qty": df["sernum"].nunique(),
+                    "total_tests": len(df),
+                    "total_pass": df["is_pass"].sum(),
+                }
+            ]
+        )
+
+        # 整体工站统计 (仅按 test_area 分组)
+        gs_stats_area = (
+            df.groupby(["test_area"])
+            .agg(
+                total_qty=("is_pass", "count"),
+                pass_qty=("is_pass", "sum"),
+            )
+            .reset_index()
+        )
+        gs_stats_area["date_group"] = "Total"
+        gs_stats_area["uuttype"] = self.S_Summary
+
+        stats_list = [base_stats, gs_stats]
+        area_list = [base_stats_area, gs_stats_area]
+        ete_list = []
+
         if is_first_pass:
-            base_sernum_ete = df.groupby(["date_group", "uuttype", "sernum"])["is_pass"].min().reset_index()
+            _base_sernum_ete = df.groupby(["date_group", "uuttype", "sernum"])["is_pass"].min().reset_index()
             base_ete = (
-                base_sernum_ete.groupby(["date_group", "uuttype"])
-                .agg(ete_total=("is_pass", "count"), ete_pass=("is_pass", "sum"))
+                _base_sernum_ete.groupby(["date_group", "uuttype"])
+                .agg(
+                    ete_total=("is_pass", "count"),
+                    ete_pass=("is_pass", "sum"),
+                )
                 .reset_index()
             )
+            ete_list.append(base_ete)
 
-        # ==========================================
-        # 步骤 B: 时间段汇总统计 (仅按 date_group)
-        # ==========================================
-        ds_stats = (
-            df.groupby(["date_group"])
-            .agg(board_qty=("sernum", "nunique"), total_tests=("is_pass", "count"), total_pass=("is_pass", "sum"))
-            .reset_index()
-        )
-        ds_stats["uuttype"] = "Summary"
-
-        ds_area = (
-            df.groupby(["date_group", "test_area"])
-            .agg(total_qty=("is_pass", "count"), pass_qty=("is_pass", "sum"))
-            .reset_index()
-        )
-        ds_area["uuttype"] = "Summary"
-
-        if is_first_pass:
-            ds_sernum_ete = df.groupby(["date_group", "sernum"])["is_pass"].min().reset_index()
-            ds_ete = (
-                ds_sernum_ete.groupby(["date_group"])
-                .agg(ete_total=("is_pass", "count"), ete_pass=("is_pass", "sum"))
-                .reset_index()
-            )
-            ds_ete["uuttype"] = "Summary"
-
-        # ==========================================
-        # 步骤 C: 全局汇总统计 (Grand Total)
-        # ==========================================
-        stats_list = [base_stats, ds_stats]
-        area_list = [base_area, ds_area]
-        ete_list = [base_ete, ds_ete] if is_first_pass else []
-
-        if validated_params.view_type is not ViewType.NO_DATE:
-            # 整体统计 (不分组)
-            gs_stats = pd.DataFrame(
+            # 整体 ETE 统计 (仅按 sernum 判断)
+            _gs_sernum_ete = df.groupby("sernum")["is_pass"].min().reset_index()
+            gs_ete = pd.DataFrame(
                 [
                     {
                         "date_group": "Total",
-                        "uuttype": "Summary",
-                        "board_qty": df["sernum"].nunique(),
-                        "total_tests": len(df),
-                        "total_pass": df["is_pass"].sum(),
+                        "uuttype": self.S_Summary,
+                        "ete_total": len(_gs_sernum_ete),
+                        "ete_pass": _gs_sernum_ete["is_pass"].sum(),
                     }
                 ]
             )
-
-            gs_area = (
-                df.groupby(["test_area"]).agg(total_qty=("is_pass", "count"), pass_qty=("is_pass", "sum")).reset_index()
-            )
-            gs_area["date_group"] = "Total"
-            gs_area["uuttype"] = "Summary"
-
-            stats_list.append(gs_stats)
-            area_list.append(gs_area)
-
-            if is_first_pass:
-                gs_sernum_ete = df.groupby("sernum")["is_pass"].min().reset_index()
-                gs_ete = pd.DataFrame(
-                    [
-                        {
-                            "date_group": "Total",
-                            "uuttype": "Summary",
-                            "ete_total": len(gs_sernum_ete),
-                            "ete_pass": gs_sernum_ete["is_pass"].sum(),
-                        }
-                    ]
-                )
-                ete_list.append(gs_ete)
+            ete_list.append(gs_ete)
 
         # ==========================================
-        # 步骤 D: 合并所有统计结果
+        # 步骤 C: 合并统计结果
         # ==========================================
         final_stats = pd.concat(stats_list, ignore_index=True)
-        final_area = pd.concat(area_list, ignore_index=True)
+        final_stats_area = pd.concat(area_list, ignore_index=True)
+
+        # print(final_stats)
+        # print(final_stats_area)
 
         # 将工站数据转为嵌套字典以供快速查询: {(date_group, uuttype): {test_area: metrics}}
         area_dict = (
-            final_area.groupby(["date_group", "uuttype"])
+            final_stats_area.groupby(["date_group", "uuttype"])
             .apply(lambda x: x.set_index("test_area").to_dict("index"))
             .to_dict()
         )
@@ -316,7 +309,7 @@ class Querying(object):
             ete_dict = final_ete.set_index(["date_group", "uuttype"]).to_dict("index")
 
         # ==========================================
-        # 步骤 E: 组装 Pydantic 输出
+        # 步骤 D: 组装 Pydantic 输出
         # ==========================================
         report_rows = []
         for _, row in final_stats.iterrows():
@@ -346,7 +339,8 @@ class Querying(object):
                 e_rate = f"{(e_pass / e_total * 100):.2f}%" if e_total > 0 else "0.00%"
                 ete_metrics = YieldMetrics(pass_qty=e_pass, fail_qty=e_fail, total_qty=e_total, pass_rate=e_rate)
 
-            display_dg = dg if validated_params.view_type != ViewType.NO_DATE else None
+            # 如果是 NO_DATE 模式，输出时隐藏 date_group
+            display_dg = dg if validated_params.view_type is not ViewType.NO_DATE else None
 
             report_rows.append(
                 YieldRowOut(
@@ -359,13 +353,14 @@ class Querying(object):
                 )
             )
 
-        # 排序输出
-        def sort_key(x):
-            dg_order = "ZZZZZ" if x.date_group == "Total" else (x.date_group or "")
-            uut_order = "ZZZZZ" if x.uuttype == "Summary" else x.uuttype
-            return (dg_order, uut_order)
-
-        report_rows.sort(key=sort_key)
+        # 排序输出：保证 Total 永远在最后一行
+        # def sort_key(x):
+        #     # 内部使用 'Total' 作为标识，排序时将其置于最后
+        #     dg_order = "ZZZZZ" if x.date_group == "Total" else (x.date_group or "")
+        #     uut_order = "ZZZZZ" if x.uuttype == "Summary" else x.uuttype
+        #     return dg_order, uut_order
+        #
+        # report_rows.sort(key=sort_key)
         return report_rows
 
     @classmethod
@@ -409,13 +404,4 @@ class Querying(object):
 
 
 if __name__ == "__main__":
-    query = Querying(ENGINE)
-    param1 = {
-        "sernum": " FCW%",
-        "start_date": "2024-11-19",
-        "end_date": "2025-02-20",
-        "data_type": "test",
-        "view_type": "week",
-    }
-
-    ret = query.get_yield_report_pandas(param1)
+    pass
