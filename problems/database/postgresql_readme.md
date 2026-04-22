@@ -101,14 +101,14 @@ status: Mapped[str] = mapped_column(default="active")
 # 2. 动态可调用对象 (Callable)
 # 注意：这里传的是函数本身 (uuid.uuid4)，而不是函数调用 (uuid.uuid4())
 # 每次插入新记录时，SQLAlchemy 都会调用这个函数
-api_key: Mapped[str] = mapped_column(default=uuid.uuid4)
+API_KEY: Mapped[str] = mapped_column(default=uuid.uuid4)
 
 # 3. 动态时间
 created_at: Mapped[datetime] = mapped_column(default=get_utc_now)
 
 created_at: Mapped[datetime] = mapped_column(
-        server_default=func.now()
-    )
+    server_default=func.now()
+)
 ```
 
 ## 字符类型
