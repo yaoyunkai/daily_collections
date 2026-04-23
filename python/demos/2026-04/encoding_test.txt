@@ -1,0 +1,1 @@
+python -c "import sys; print('测试编码: ' + sys.stdout.encoding)" > encoding2.txt
