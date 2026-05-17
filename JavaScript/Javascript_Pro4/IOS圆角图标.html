@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超椭圆图标 - iOS风格圆角曲线实现</title>
+    <style>
+        :root {
+            --bg: #f0f0f5;
+            --card-bg: #ffffff;
+            --text: #1c1c1e;
+            --text-secondary: #636366;
+            --accent: #007aff;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+            --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.14);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(160deg, #e8e8f0 0%, #f0f0f5 30%, #ececf2 60%, #e5e5ee 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 780px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* 标题区 */
+        .header {
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1c1c1e;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        .header .subtitle {
+            font-size: 0.95rem;
+            color: #636366;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+        }
+
+        .header .badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 14px;
+            background: #1c1c1e;
+            color: #fff;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* 图标展示区 */
+        .icon-showcase {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .icon-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-group .label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #636366;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .icon-group .label .curve-type {
+            display: block;
+            font-weight: 400;
+            font-size: 0.7rem;
+            color: #8e8e93;
+            margin-top: 2px;
+        }
+
+        /* 超椭圆图标容器 */
+        .icon-wrapper {
+            position: relative;
+            width: 110px;
+            height: 110px;
+            filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.22));
+            transition: filter 0.3s ease, transform 0.3s ease;
+            cursor: default;
+        }
+
+        .icon-wrapper:hover {
+            filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.28));
+            transform: translateY(-3px);
+        }
+
+        .icon-wrapper.small {
+            width: 72px;
+            height: 72px;
+            filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.18));
+        }
+
+        .icon-wrapper.small:hover {
+            filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.24));
+            transform: translateY(-2px);
+        }
+
+        /* 图标内部 */
+        .icon-inner {
+            width: 100%;
+            height: 100%;
+            clip-path: var(--squircle-clip);
+            -webkit-clip-path: var(--squircle-clip);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 不同颜色的图标背景 */
+        .icon-bg-blue {
+            background: linear-gradient(145deg, #4da3ff 0%, #007aff 40%, #0055cc 100%);
+        }
+
+        .icon-bg-green {
+            background: linear-gradient(145deg, #5ee075 0%, #34c759 40%, #1e9e3a 100%);
+        }
+
+        .icon-bg-orange {
+            background: linear-gradient(145deg, #ff9a4d 0%, #ff6b35 40%, #e04d1a 100%);
+        }
+
+        .icon-bg-pink {
+            background: linear-gradient(145deg, #ff6b9d 0%, #e8437a 40%, #c02650 100%);
+        }
+
+        .icon-bg-purple {
+            background: linear-gradient(145deg, #b57eeb 0%, #8b5cf6 40%, #6c3fd4 100%);
+        }
+
+        .icon-bg-teal {
+            background: linear-gradient(145deg, #5ee0d0 0%, #00c7be 40%, #009d94 100%);
+        }
+
+        /* 图标内容 */
+        .icon-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .icon-content svg {
+            width: 52%;
+            height: 52%;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+        }
+
+        .icon-wrapper.small .icon-content svg {
+            width: 44%;
+            height: 44%;
+        }
+
+        /* 高光覆盖层 */
+        .icon-highlight {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            clip-path: var(--squircle-clip);
+            -webkit-clip-path: var(--squircle-clip);
+            background: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.32) 0%,
+            rgba(255, 255, 255, 0.06) 35%,
+            transparent 55%,
+            rgba(0, 0, 0, 0.04) 100%);
+        }
+
+        /* 普通圆角对比 */
+        .icon-rounded {
+            width: 110px;
+            height: 110px;
+            border-radius: 22.5%;
+            /* 近似iOS圆角 */
+            filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.22));
+            transition: filter 0.3s ease, transform 0.3s ease;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .icon-rounded:hover {
+            filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.28));
+            transform: translateY(-3px);
+        }
+
+        .icon-rounded .icon-highlight-rounded {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            border-radius: 22.5%;
+            background: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.32) 0%,
+            rgba(255, 255, 255, 0.06) 35%,
+            transparent 55%,
+            rgba(0, 0, 0, 0.04) 100%);
+        }
+
+        /* 对比卡片 */
+        .comparison-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 28px 24px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .comparison-card h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .comparison-card p {
+            font-size: 0.85rem;
+            color: #636366;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .comparison-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .comparison-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comparison-item .mini-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #8e8e93;
+            letter-spacing: 0.02em;
+        }
+
+        .curve-demo {
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+
+        .curve-demo svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 滑块控制区 */
+        .control-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 24px 28px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .control-card .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .control-card label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1c1c1e;
+            letter-spacing: -0.01em;
+        }
+
+        .control-card .n-value-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #007aff;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+        }
+
+        .control-card input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #e0e0e8 0%, #c0c0cc 100%);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .control-card input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2.5px solid #007aff;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .control-card input[type="range"]::-webkit-slider-thumb:hover {
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+            transform: scale(1.08);
+        }
+
+        .control-card input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.04);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        }
+
+        .control-presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-presets button {
+            padding: 7px 16px;
+            border-radius: 18px;
+            border: 1.5px solid #d1d1d6;
+            background: #fff;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: #1c1c1e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+        }
+
+        .control-presets button:hover {
+            background: #f2f2f7;
+            border-color: #b0b0b8;
+        }
+
+        .control-presets button.active {
+            background: #007aff;
+            color: #fff;
+            border-color: #007aff;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+
+        /* 信息卡片 */
+        .info-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px 24px;
+            box-shadow: var(--shadow);
+            font-size: 0.83rem;
+            color: #636366;
+            line-height: 1.6;
+        }
+
+        .info-card strong {
+            color: #1c1c1e;
+        }
+
+        .info-card code {
+            background: #f2f2f7;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            font-size: 0.78rem;
+            color: #007aff;
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .icon-showcase {
+                gap: 16px;
+            }
+
+            .icon-wrapper {
+                width: 80px;
+                height: 80px;
+            }
+
+            .icon-wrapper.small {
+                width: 56px;
+                height: 56px;
+            }
+
+            .icon-rounded {
+                width: 80px;
+                height: 80px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .control-card {
+                padding: 16px 18px;
+            }
+
+            .comparison-card {
+                padding: 20px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 隐藏的SVG，定义超椭圆clipPath -->
+<svg width="0" height="0" style="position:absolute;pointer-events:none;" aria-hidden="true">
+    <defs>
+        <!--
+        超椭圆 clipPath
+        使用 objectBoundingBox 坐标系统 (0到1范围)
+        参数方程: x=0.5+0.5*sign(cosθ)*|cosθ|^(2/n), y=0.5+0.5*sign(sinθ)*|sinθ|^(2/n)
+        n=5 对应iOS图标风格
+      -->
+        <clipPath id="squircle-n5" clipPathUnits="objectBoundingBox">
+            <path id="squircle-path-n5" d=""/>
+        </clipPath>
+        <clipPath id="squircle-dynamic" clipPathUnits="objectBoundingBox">
+            <path id="squircle-path-dynamic" d=""/>
+        </clipPath>
+    </defs>
+</svg>
+
+<div class="container">
+    <!-- 标题 -->
+    <div class="header">
+        <h1>超椭圆图标</h1>
+        <p class="subtitle">iOS 风格连续曲率圆角 — Squircle 曲线实现</p>
+        <span class="badge">超椭圆 n ≈ 5</span>
+    </div>
+
+    <!-- 图标展示区 -->
+    <div class="icon-showcase" id="iconShowcase">
+        <!-- 超椭圆图标组 -->
+        <div class="icon-group">
+            <div class="icon-wrapper" data-n="5">
+                <div class="icon-inner icon-bg-blue" style="--squircle-clip: url(#squircle-n5);">
+                    <div class="icon-content">
+                        <!-- 相机图标 -->
+                        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="14" y="18" width="32" height="26" rx="5" fill="white" opacity="0.95"/>
+                            <circle cx="30" cy="31" r="7" fill="#007aff"/>
+                            <circle cx="30" cy="31" r="4" fill="white" opacity="0.7"/>
+                            <rect x="22" y="14" width="16" height="5" rx="2.5" fill="white" opacity="0.85"/>
+                            <rect x="26" y="10" width="8" height="5" rx="2" fill="white" opacity="0.6"/>
+                        </svg>
+                    </div>
+                    <div class="icon-highlight" style="--squircle-clip: url(#squircle-n5);"></div>
+                </div>
+            </div>
+            <span class="label">超椭圆<span class="curve-type">Squircle (n=5)</span></span>
+        </div>
+
+        <!-- 第二个超椭圆图标 -->
+        <div class="icon-group">
+            <div class="icon-wrapper" data-n="5">
+                <div class="icon-inner icon-bg-green" style="--squircle-clip: url(#squircle-n5);">
+                    <div class="icon-content">
+                        <!-- 消息气泡图标 -->
+                        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 16h32a4 4 0 014 4v20a4 4 0 01-4 4H28l-8 7v-7h-6a4 4 0 01-4-4V20a4 4 0 014-4z"
+                                  fill="white" opacity="0.95"/>
+                            <circle cx="22" cy="30" r="3.5" fill="#34c759"/>
+                            <circle cx="30" cy="30" r="3.5" fill="#34c759"/>
+                            <circle cx="38" cy="30" r="3.5" fill="#34c759"/>
+                        </svg>
+                    </div>
+                    <div class="icon-highlight" style="--squircle-clip: url(#squircle-n5);"></div>
+                </div>
+            </div>
+            <span class="label">超椭圆<span class="curve-type">Squircle (n=5)</span></span>
+        </div>
+
+        <!-- 第三个超椭圆图标 -->
+        <div class="icon-group">
+            <div class="icon-wrapper" data-n="5">
+                <div class="icon-inner icon-bg-orange" style="--squircle-clip: url(#squircle-n5);">
+                    <div class="icon-content">
+                        <!-- 音乐音符图标 -->
+                        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="19" cy="40" r="8" fill="white" opacity="0.9"/>
+                            <circle cx="41" cy="36" r="7" fill="white" opacity="0.85"/>
+                            <rect x="25" y="8" width="6" height="34" rx="3" fill="white" opacity="0.9"/>
+                            <rect x="40" y="14" width="5" height="24" rx="2.5" fill="white" opacity="0.8"/>
+                        </svg>
+                    </div>
+                    <div class="icon-highlight" style="--squircle-clip: url(#squircle-n5);"></div>
+                </div>
+            </div>
+            <span class="label">超椭圆<span class="curve-type">Squircle (n=5)</span></span>
+        </div>
+
+        <!-- 普通圆角对比 -->
+        <div class="icon-group">
+            <div class="icon-rounded icon-bg-blue">
+                <div class="icon-content">
+                    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="14" y="18" width="32" height="26" rx="5" fill="white" opacity="0.95"/>
+                        <circle cx="30" cy="31" r="7" fill="#007aff"/>
+                        <circle cx="30" cy="31" r="4" fill="white" opacity="0.7"/>
+                        <rect x="22" y="14" width="16" height="5" rx="2.5" fill="white" opacity="0.85"/>
+                        <rect x="26" y="10" width="8" height="5" rx="2" fill="white" opacity="0.6"/>
+                    </svg>
+                </div>
+                <div class="icon-highlight-rounded"></div>
+            </div>
+            <span class="label">普通圆角<span class="curve-type">border-radius: 22.5%</span></span>
+        </div>
+    </div>
+
+    <!-- 曲线对比卡片 -->
+    <div class="comparison-card">
+        <h3>🔍 曲线对比：超椭圆 vs 普通圆角</h3>
+        <p>观察角落处曲率的变化——超椭圆在边缘处更平直，在角落处曲率逐渐增大，<br>形成<strong>连续曲率</strong>过渡；普通圆角在直线与圆弧交界处曲率<strong>突然跳变</strong>。
+        </p>
+        <div class="comparison-row">
+            <div class="comparison-item">
+                <div class="curve-demo">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 超椭圆 n=5 -->
+                        <path id="curve-squircle-demo" d=""
+                              fill="#007aff" opacity="0.25" stroke="#007aff" stroke-width="2.5"/>
+                        <text x="50" y="93" text-anchor="middle" font-size="8" fill="#636366" font-family="sans-serif">
+                            超椭圆 n=5
+                        </text>
+                    </svg>
+                </div>
+                <span class="mini-label">连续曲率</span>
+            </div>
+            <div class="comparison-item">
+                <div class="curve-demo">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 普通圆角 -->
+                        <rect x="5" y="5" width="90" height="90" rx="22.5" ry="22.5"
+                              fill="#ff6b35" opacity="0.25" stroke="#ff6b35" stroke-width="2.5"/>
+                        <text x="50" y="93" text-anchor="middle" font-size="8" fill="#636366" font-family="sans-serif">
+                            普通圆角 22.5%
+                        </text>
+                    </svg>
+                </div>
+                <span class="mini-label">曲率不连续</span>
+            </div>
+            <div class="comparison-item">
+                <div class="curve-demo">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 圆形 n=2 -->
+                        <circle cx="50" cy="50" r="45" fill="#34c759" opacity="0.25" stroke="#34c759"
+                                stroke-width="2.5"/>
+                        <text x="50" y="93" text-anchor="middle" font-size="8" fill="#636366" font-family="sans-serif">
+                            正圆 n=2
+                        </text>
+                    </svg>
+                </div>
+                <span class="mini-label">完全圆润</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 交互控制区 -->
+    <div class="control-card">
+        <div class="control-header">
+            <label for="nSlider">调整超椭圆参数 <strong>n</strong>（实时预览）</label>
+            <span class="n-value-display" id="nValueDisplay">n = 5.0</span>
+        </div>
+        <input type="range" id="nSlider" min="2" max="10" step="0.1" value="5"/>
+        <div class="control-presets">
+            <button data-n="2">圆形 n=2</button>
+            <button data-n="3">柔和 n=3</button>
+            <button data-n="4">过渡 n=4</button>
+            <button data-n="5" class="active">iOS风格 n=5</button>
+            <button data-n="7">方正 n=7</button>
+            <button data-n="10">极方 n=10</button>
+        </div>
+    </div>
+
+    <!-- 说明卡片 -->
+    <div class="info-card">
+        <strong>📐 超椭圆方程：</strong>
+        <code>|x/a|^n + |y/b|^n = 1</code> &nbsp;（Lamé曲线）<br>
+        当 <strong>n = 5</strong> 时，曲线在角落处曲率更大、边缘处更平直，形成<strong>连续曲率</strong>的平滑过渡——这正是
+        iOS 图标的标志性特征。<br>
+        <strong>实现方式：</strong>使用 SVG <code>clipPath</code> + 超椭圆参数方程采样 ≈200个点构建路径，通过 <code>clip-path</code>
+        裁剪 HTML 元素。
+    </div>
+</div>
+
+<script>
+    /**
+     * 超椭圆（Squircle）路径生成器
+     *
+     * 参数方程（基于极角推广）：
+     *   x(θ) = cx + rx * sign(cosθ) * |cosθ|^(2/n)
+     *   y(θ) = cy + ry * sign(sinθ) * |sinθ|^(2/n)
+     *
+     * 其中 n 控制形状：
+     *   n=2  → 标准椭圆（正方形时为正圆）
+     *   n=5  → iOS 图标风格
+     *   n→∞ → 趋近矩形
+     *
+     * @param {number} cx - 中心 x（objectBoundingBox坐标，0-1）
+     * @param {number} cy - 中心 y
+     * @param {number} rx - 半轴 x
+     * @param {number} ry - 半轴 y
+     * @param {number} n - 超椭圆指数
+     * @param {number} numPoints - 采样点数
+     * @returns {string} SVG path 的 d 属性字符串
+     */
+    function generateSquirclePath(cx, cy, rx, ry, n, numPoints = 240) {
+        const points = [];
+        const exponent = 2 / n;
+
+        for (let i = 0; i < numPoints; i++) {
+            const theta = (i / numPoints) * Math.PI * 2;
+            const cosTheta = Math.cos(theta);
+            const sinTheta = Math.sin(theta);
+
+            const absCos = Math.abs(cosTheta);
+            const absSin = Math.abs(sinTheta);
+
+            const x = cx + rx * Math.sign(cosTheta) * Math.pow(absCos, exponent);
+            const y = cy + ry * Math.sign(sinTheta) * Math.pow(absSin, exponent);
+
+            points.push({x, y});
+        }
+
+        // 构建 SVG 路径
+        let d = `M ${points[0].x.toFixed(6)} ${points[0].y.toFixed(6)}`;
+        for (let i = 1; i < points.length; i++) {
+            d += ` L ${points[i].x.toFixed(6)} ${points[i].y.toFixed(6)}`;
+        }
+        d += ' Z';
+        return d;
+    }
+
+    /**
+     * 更新所有超椭圆clipPath
+     * @param {number} n - 超椭圆指数
+     */
+    function updateAllSquirclePaths(n) {
+        const pathData = generateSquirclePath(0.5, 0.5, 0.5, 0.5, n, 240);
+
+        // 更新静态clipPath (n=5专用)
+        const pathN5 = document.getElementById('squircle-path-n5');
+        if (pathN5 && Math.abs(n - 5) < 0.001) {
+            pathN5.setAttribute('d', pathData);
+        }
+
+        // 更新动态clipPath
+        const pathDynamic = document.getElementById('squircle-path-dynamic');
+        if (pathDynamic) {
+            pathDynamic.setAttribute('d', pathData);
+        }
+
+        // 更新对比区超椭圆演示
+        const curveDemo = document.getElementById('curve-squircle-demo');
+        if (curveDemo) {
+            // 在100x100的viewBox中，中心50,50，半轴45
+            const demoPath = generateSquirclePath(50, 50, 45, 45, n, 200);
+            curveDemo.setAttribute('d', demoPath);
+        }
+
+        // 更新展示区图标的clip-path引用
+        const iconWrappers = document.querySelectorAll('.icon-wrapper[data-n]');
+        iconWrappers.forEach(wrapper => {
+            const currentN = parseFloat(wrapper.getAttribute('data-n'));
+            // 如果图标的n值与当前n值接近（或我们统一更新所有图标）
+            wrapper.setAttribute('data-n', n);
+            const iconInner = wrapper.querySelector('.icon-inner');
+            const iconHighlight = wrapper.querySelector('.icon-highlight');
+            if (iconInner) {
+                iconInner.style.setProperty('--squircle-clip', 'url(#squircle-dynamic)');
+            }
+            if (iconHighlight) {
+                iconHighlight.style.setProperty('--squircle-clip', 'url(#squircle-dynamic)');
+            }
+        });
+
+        // 更新n值显示
+        const nDisplay = document.getElementById('nValueDisplay');
+        if (nDisplay) {
+            nDisplay.textContent = `n = ${n.toFixed(1)}`;
+        }
+
+        // 更新预设按钮状态
+        document.querySelectorAll('.control-presets button').forEach(btn => {
+            const btnN = parseFloat(btn.getAttribute('data-n'));
+            btn.classList.toggle('active', Math.abs(btnN - n) < 0.05);
+        });
+
+        // 更新滑块
+        const slider = document.getElementById('nSlider');
+        if (slider && Math.abs(parseFloat(slider.value) - n) > 0.01) {
+            slider.value = n;
+        }
+    }
+
+    /**
+     * 初始化所有路径
+     */
+    function initializePaths() {
+        // 初始n=5的超椭圆路径
+        const initialN = 5;
+        const pathDataN5 = generateSquirclePath(0.5, 0.5, 0.5, 0.5, initialN, 240);
+
+        // 设置n=5的clipPath
+        const pathN5 = document.getElementById('squircle-path-n5');
+        if (pathN5) {
+            pathN5.setAttribute('d', pathDataN5);
+        }
+
+        // 设置动态clipPath（初始也是n=5）
+        const pathDynamic = document.getElementById('squircle-path-dynamic');
+        if (pathDynamic) {
+            pathDynamic.setAttribute('d', pathDataN5);
+        }
+
+        // 设置对比区超椭圆演示
+        const curveDemo = document.getElementById('curve-squircle-demo');
+        if (curveDemo) {
+            const demoPath = generateSquirclePath(50, 50, 45, 45, initialN, 200);
+            curveDemo.setAttribute('d', demoPath);
+        }
+
+        // 初始时，图标使用n=5的clipPath
+        // 已在HTML中通过--squircle-clip引用#squircle-n5
+    }
+
+    // 事件监听
+    document.addEventListener('DOMContentLoaded', () => {
+        initializePaths();
+
+        const slider = document.getElementById('nSlider');
+        const nDisplay = document.getElementById('nValueDisplay');
+
+        // 滑块变化
+        slider.addEventListener('input', () => {
+            const n = parseFloat(slider.value);
+            updateAllSquirclePaths(n);
+        });
+
+        // 预设按钮
+        document.querySelectorAll('.control-presets button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const n = parseFloat(btn.getAttribute('data-n'));
+                updateAllSquirclePaths(n);
+                slider.value = n;
+            });
+        });
+
+        // 初始化n值显示
+        if (nDisplay) {
+            nDisplay.textContent = 'n = 5.0';
+        }
+
+        console.log('✅ 超椭圆图标演示已就绪');
+        console.log('   - SVG clipPath 使用 objectBoundingBox 坐标');
+        console.log('   - 超椭圆参数方程采样 240 个点构建路径');
+        console.log('   - 支持 n=2（圆形）到 n=10（极方）实时切换');
+        console.log('   - 对比展示：超椭圆 vs 普通 border-radius');
+    });
+</script>
+</body>
+</html>
