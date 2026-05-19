@@ -1,0 +1,7 @@
+address: xxxxxxx
+square_feet: 1706
+price_usd: 48833
+
+address: xxxxxxxccccccc
+square_feet: 170633
+price_usd: 4883311213
