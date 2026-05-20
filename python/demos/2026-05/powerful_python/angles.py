@@ -18,5 +18,5 @@ class Angle(object):
         """
         return self.degrees < 90
 
-    def __add__(self, other: "Self"):
+    def __add__(self, other: Self):
         return Angle(self.degrees + other.degrees)

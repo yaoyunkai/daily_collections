@@ -17,3 +17,5 @@ __pycache__/
 .ruff_cache/
 
 /demos/
+
+.pytest_cache/

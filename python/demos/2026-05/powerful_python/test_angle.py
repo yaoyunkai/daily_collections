@@ -3,6 +3,11 @@ test_angle.py
 
 python -m unittest test_angle.py
 
+
+python.demos.2026-05.powerful_python.test_angle
+test_angle
+
+
 created at 2026-05-19
 """
 
@@ -29,3 +34,7 @@ class TestAngle(unittest.TestCase):
         total_angle = small_angle + big_angle
 
         self.assertEqual(20, total_angle.degrees, "adding angles with wrap-around")
+
+
+if __name__ == "__main__":
+    unittest.main()
