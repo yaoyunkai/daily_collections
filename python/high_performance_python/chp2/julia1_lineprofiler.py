@@ -1,4 +1,8 @@
-"""Julia set generator without optional PIL-based image drawing"""
+"""Julia set generator without optional PIL-based image drawing
+
+kernprof -l -v julia1_lineprofiler.py
+
+"""
 
 import time
 
