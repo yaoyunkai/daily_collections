@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Complex Number Iteration Plot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Evolution of abs(z) over 300 iterations</h2>
+    <!-- 定义画布，宽度800，高度400 -->
+    <canvas id="plotCanvas" width="800" height="400"></canvas>
+
+    <script>
+        // 1. 准备数据 (复数运算)
+        const cx = -0.62772; // c 的实部
+        const cy = -0.42193; // c 的虚部
+        let zx = 0;          // z 的实部
+        let zy = 0;          // z 的虚部
+
+        const iterations = 300;
+        const data = [];
+        let maxAbsZ = 0;
+
+        for (let n = 0; n < iterations; n++) {
+            // z = z * z + c
+            // (zx + zy*i)^2 = zx^2 - zy^2 + 2*zx*zy*i
+            let next_zx = (zx * zx) - (zy * zy) + cx;
+            let next_zy = (2 * zx * zy) + cy;
+
+            zx = next_zx;
+            zy = next_zy;
+
+            // 计算 abs(z) = sqrt(zx^2 + zy^2)
+            let absZ = Math.sqrt(zx * zx + zy * zy);
+            data.push(absZ);
+
+            // 记录最大值，用于动态调整纵坐标比例
+            if (absZ > maxAbsZ) {
+                maxAbsZ = absZ;
+            }
+        }
+
+        // 2. 使用 Canvas 绘图
+        const canvas = document.getElementById('plotCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 设置图表的边距
+        const padding = 50;
+        const plotWidth = canvas.width - padding * 2;
+        const plotHeight = canvas.height - padding * 2;
+
+        // 绘制坐标轴
+        ctx.beginPath();
+        ctx.moveTo(padding, padding); // Y轴顶点
+        ctx.lineTo(padding, canvas.height - padding); // 原点
+        ctx.lineTo(canvas.width - padding, canvas.height - padding); // X轴终点
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 绘制坐标轴标签
+        ctx.fillStyle = '#000';
+        ctx.font = '14px Arial';
+        ctx.fillText('abs(z)', padding - 40, padding - 10);
+        ctx.fillText('Iterations (n)', canvas.width - padding - 40, canvas.height - padding + 40);
+
+        // 绘制 Y 轴刻度 (最大值)
+        ctx.fillText(maxAbsZ.toFixed(2), padding - 35, padding + 5);
+        // 绘制 X 轴刻度 (最大值)
+        ctx.fillText('300', canvas.width - padding - 10, canvas.height - padding + 20);
+        // 绘制原点
+        ctx.fillText('0', padding - 15, canvas.height - padding + 15);
+
+        // 绘制折线
+        ctx.beginPath();
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 1.5;
+
+        for (let i = 0; i < data.length; i++) {
+            // 将数据映射到画布的像素坐标上
+            // X坐标：按比例分配到 plotWidth
+            let x = padding + (i / (iterations - 1)) * plotWidth;
+            // Y坐标：按比例分配到 plotHeight (注意 Canvas 的 Y 轴是向下的，所以要用减法)
+            let y = canvas.height - padding - (data[i] / maxAbsZ) * plotHeight;
+
+            if (i === 0) {
+                ctx.moveTo(x, y); // 移动到第一个点
+            } else {
+                ctx.lineTo(x, y); // 连接后续的点
+            }
+        }
+        ctx.stroke(); // 渲染线条
+
+        // 可选：在数据点上绘制小圆点
+        ctx.fillStyle = 'red';
+        for (let i = 0; i < data.length; i++) {
+            let x = padding + (i / (iterations - 1)) * plotWidth;
+            let y = canvas.height - padding - (data[i] / maxAbsZ) * plotHeight;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2); // 画半径为2的圆
+            ctx.fill();
+        }
+
+    </script>
+</body>
+</html>

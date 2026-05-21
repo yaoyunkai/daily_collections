@@ -40,7 +40,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "line-profiler>=5.0.2",
     "ruff>=0.15.8",
+    "snakeviz>=2.2.2",
     "sqlacodegen>=4.0.3",
 ]
 

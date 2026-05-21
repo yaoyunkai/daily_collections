@@ -1,2 +1,145 @@
 # high performance python
 
+## 2. profiling
+
+### 2.1 性能分析的方式
+
+timeit , time.time() 分析执行时间。可选的工具 linux `/usr/bin/time`
+
+cProfile 分析函数的执行时长。
+
+line_profiler 分析每行执行的情况。
+
+使用perf stat来搞明白以下两个方面：最终在CPU中执行了多少个指令；CPU缓存的利用情况。
+
+使用py-spy来了解正在运行的Python进程。
+
+memory_profiler:适用于在带标注的图表中跟踪一段时间内RAM的占用量
+
+### 使用cProfile分析函数执行时长
+
+`python -m cProfile -s cumulative calc_julia.py`
+
+```
+Length of x: 1000
+Total elements: 1000000
+         36257474 function calls (36256666 primitive calls) in 11.141 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     24/1    0.000    0.000   11.141   11.141 {built-in method builtins.exec}
+        1    0.021    0.021   11.141   11.141 calc_julia.py:1(<module>)
+        1    0.469    0.469   11.050   11.050 calc_julia.py:88(calc_pure_python)
+        1    7.857    7.857   10.448   10.448 calc_julia.py:74(calculate_z_serial_purepython)
+ 34219980    2.591    0.000    2.591    0.000 {built-in method builtins.abs}
+  2003867    0.129    0.000    0.129    0.000 {method 'append' of 'list' objects}
+     37/3    0.000    0.000    0.069    0.023 <frozen importlib._bootstrap>:1165(_find_and_load)
+     37/3    0.000    0.000    0.069    0.023 <frozen importlib._bootstrap>:1120(_find_and_load_unlocked)
+     35/3    0.000    0.000    0.066    0.022 <frozen importlib._bootstrap>:666(_load_unlocked)
+     22/2    0.000    0.000    0.066    0.033 <frozen importlib._bootstrap_external>:934(exec_module)
+     81/5    0.000    0.000    0.066    0.013 <frozen importlib._bootstrap>:233(_call_with_frames_removed)
+ ......
+```
+
+为更好地展现cProfile的结果，可将其写入一个统计文件，再使用Python对这个文件进行分析：
+
+`python -m cProfile -o profile.status calc_julia.py`
+
+下面是关于这个文件的使用方式：
+
+```
+In [1]: import pstats
+
+In [2]: p = pstats.Stats("profile.status")
+
+In [3]: p.sort_stats("cumulative")
+Out[3]: <pstats.Stats at 0x2e418961e50>
+
+In [4]: p.print_stats()
+
+In [5]: p.print_callers()
+   Ordered by: cumulative time
+
+```
+
+### 使用SnakeViz可视化cProfile的输出
+
+`snakeviz profile.status`
+
+### 2.8 使用line_profiler
+
+命令行:
+
+`kernprof -l -v julia1_lineprofiler.py`
+
+输出结果如下：
+
+```
+Wrote profile results to 'julia1_lineprofiler.py.lprof'
+Timer unit: 1e-06 s
+
+Total time: 34.7942 s
+File: julia1_lineprofiler.py
+Function: calculate_z_serial_purepython at line 12
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    12                                           @profile
+    13                                           def calculate_z_serial_purepython(maxiter, zs, cs):
+    14                                               """Calculate output list using Julia update rule"""
+    15         1       1447.4   1447.4      0.0      output = [0] * len(zs)
+    16   1000001     149277.7      0.1      0.4      for i in range(len(zs)):
+    17   1000000     142136.4      0.1      0.4          n = 0
+    18   1000000     202323.4      0.2      0.6          z = zs[i]
+    19   1000000     164962.6      0.2      0.5          c = cs[i]
+    20  34219980   16384883.2      0.5     47.1          while abs(z) < 2 and n < maxiter:
+    21  33219980   10148116.0      0.3     29.2              z = z * z + c
+    22  33219980    7369152.5      0.2     21.2              n += 1
+    23   1000000     231857.6      0.2      0.7          output[i] = n
+    24         1          8.8      8.8      0.0      return output
+
+Total time: 43.7249 s
+File: julia1_lineprofiler.py
+Function: calc_pure_python at line 27
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    27                                           @profile
+    28                                           def calc_pure_python(draw_output, desired_width, max_iterations):
+    29                                               """Create a list of complex co-ordinates (zs) and complex parameters (cs), build Julia set and display"""
+    30         1          7.5      7.5      0.0      x_step = (x2 - x1) / desired_width
+    31         1          0.7      0.7      0.0      y_step = (y1 - y2) / desired_width
+    32         1          0.4      0.4      0.0      x = []
+    33         1          0.3      0.3      0.0      y = []
+    34         1          0.4      0.4      0.0      ycoord = y2
+    35      1001        147.9      0.1      0.0      while ycoord > y1:
+    36      1000        224.2      0.2      0.0          y.append(ycoord)
+    37      1000        157.4      0.2      0.0          ycoord += y_step
+    38         1          0.1      0.1      0.0      xcoord = x1
+    39      1001        124.7      0.1      0.0      while xcoord < x2:
+    40      1000        174.0      0.2      0.0          x.append(xcoord)
+    41      1000        131.1      0.1      0.0          xcoord += x_step
+    42                                               # set width and height to the generated pixel counts, rather than the
+    43                                               # pre-rounding desired width and height
+    44                                               # build a list of co-ordinates and the initial condition for each cell.
+    45                                               # Note that our initial condition is a constant and could easily be removed,
+    46                                               # we use it to simulate a real-world scenario with several inputs to our function
+    47         1          0.1      0.1      0.0      zs = []
+    48         1          0.5      0.5      0.0      cs = []
+    49      1001        122.3      0.1      0.0      for ycoord in y:
+    50   1001000     106730.5      0.1      0.2          for xcoord in x:
+    51   1000000     341486.7      0.3      0.8              zs.append(complex(xcoord, ycoord))
+    52   1000000     365322.7      0.4      0.8              cs.append(complex(c_real, c_imag))
+    53
+    54         1        286.1    286.1      0.0      print("Length of x:", len(x))
+    55         1        228.2    228.2      0.0      print("Total elements:", len(zs))
+    56         1          4.7      4.7      0.0      start_time = time.time()
+    57         1   42903719.9 4.29e+07     98.1      output = calculate_z_serial_purepython(max_iterations, zs, cs)
+    58         1          3.9      3.9      0.0      end_time = time.time()
+    59         1          1.2      1.2      0.0      secs = end_time - start_time
+    60         1        215.5    215.5      0.0      print(calculate_z_serial_purepython.__name__ + " took", secs, "seconds")
+    61
+    62         1       5812.3   5812.3      0.0      assert sum(output) == 33219980  # this sum is expected for 1000^2 grid with 300 iterations
+```
+
