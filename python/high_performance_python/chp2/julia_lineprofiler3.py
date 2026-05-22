@@ -2,27 +2,15 @@
 
 kernprof -l -v julia1_lineprofiler.py
 
-kernprof 会导入 profile
-
-
 """
 
 import time
 
-# from line_profiler import profile
+from line_profiler import profile
 
 # area of complex space to investigate
 x1, x2, y1, y2 = -1.8, 1.8, -1.8, 1.8
 c_real, c_imag = -0.62772, -0.42193
-
-
-if "line_profiler" not in dir() and "profile" not in dir():
-
-    def profile(func):
-        def inner(*args, **kwargs):
-            return func(*args, **kwargs)
-
-        return inner
 
 
 @profile
@@ -33,7 +21,7 @@ def calculate_z_serial_purepython(maxiter, zs, cs):
         n = 0
         z = zs[i]
         c = cs[i]
-        while abs(z) < 2 and n < maxiter:
+        while n < maxiter and abs(z) < 2:
             z = z * z + c
             n += 1
         output[i] = n

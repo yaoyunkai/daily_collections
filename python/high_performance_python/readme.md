@@ -143,3 +143,55 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     62         1       5812.3   5812.3      0.0      assert sum(output) == 33219980  # this sum is expected for 1000^2 grid with 300 iterations
 ```
 
+### 2.9 使用memory_profiler
+
+### 2.10 使用py-spy
+
+安装：`uv add py-spy`
+
+```
+py-spy record -o record.svg -- python julia1_lineprofiler.py
+Error: Failed to find python version from target process
+```
+
+### 2.11 查看字节码
+
+使用dis来查看函数的字节码
+
+```
+In [1]: import dis
+
+In [2]: import julia1_lineprofiler
+Length of x: 1000
+Total elements: 1000000
+calculate_z_serial_purepython took 3.8175511360168457 seconds
+
+In [3]: dis.dis(julia1_lineprofiler.calculate_z_serial_purepython)
+ 16           0 RESUME                   0
+
+ 19           2 LOAD_CONST               1 (0)
+              4 BUILD_LIST               1
+              6 LOAD_GLOBAL              1 (NULL + len)
+             18 LOAD_FAST                1 (zs)
+             20 PRECALL                  1
+             24 CALL                     1
+             34 BINARY_OP                5 (*)
+             38 STORE_FAST               3 (output)
+
+ 20          40 LOAD_GLOBAL              3 (NULL + range)
+             52 LOAD_GLOBAL              1 (NULL + len)
+             64 LOAD_FAST                1 (zs)
+             66 PRECALL                  1
+             70 CALL                     1
+```
+
+## 6. 矩阵向量计算
+
+为探索矩阵和向量计算，我们将反复以液体扩散为例。扩散是移动液体并使其均匀混合的机制之一。
+
+```math
+\frac{\partial}{\partial t} \boldsymbol{u}(x, t)=D \cdot \frac{\partial^{2}}{\partial x^{2}} \boldsymbol{u}(x, t)
+```
+
+在这个方程中，u是表示液体量的向量。例如，可使用值为0的向量表示只有水，使用值为1的向量表示只有染料（值位于这两者之间的向量表示混合了两种液体）。
+

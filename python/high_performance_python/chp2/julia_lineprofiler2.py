@@ -1,28 +1,17 @@
-"""Julia set generator without optional PIL-based image drawing
-
-kernprof -l -v julia1_lineprofiler.py
-
-kernprof 会导入 profile
+"""
+julia_lineprofiler2.py
 
 
+created at 2026-05-22
 """
 
 import time
 
-# from line_profiler import profile
+from line_profiler import profile
 
 # area of complex space to investigate
 x1, x2, y1, y2 = -1.8, 1.8, -1.8, 1.8
 c_real, c_imag = -0.62772, -0.42193
-
-
-if "line_profiler" not in dir() and "profile" not in dir():
-
-    def profile(func):
-        def inner(*args, **kwargs):
-            return func(*args, **kwargs)
-
-        return inner
 
 
 @profile
@@ -33,9 +22,14 @@ def calculate_z_serial_purepython(maxiter, zs, cs):
         n = 0
         z = zs[i]
         c = cs[i]
-        while abs(z) < 2 and n < maxiter:
-            z = z * z + c
-            n += 1
+        while True:
+            not_yet_escaped = abs(z) < 2
+            iterations_left = n < maxiter
+            if not_yet_escaped and iterations_left:
+                z = z * z + c
+                n += 1
+            else:
+                break
         output[i] = n
     return output
 
@@ -78,4 +72,7 @@ def calc_pure_python(draw_output, desired_width, max_iterations):
     assert sum(output) == 33219980  # this sum is expected for 1000^2 grid with 300 iterations
 
 
+# Calculate the Julia set using a pure Python solution with
+# reasonable defaults for a laptop
+# set draw_output to True to use PIL to draw an image
 calc_pure_python(draw_output=False, desired_width=1000, max_iterations=300)
