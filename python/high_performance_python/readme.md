@@ -258,3 +258,205 @@ for i in range(N):
         )
 ```
 
+### 6.2 纯python的方式运行
+
+```python
+"""
+diffusion_python.py
+
+
+created at 2026-05-22
+"""
+
+import time
+
+from line_profiler import profile
+
+grid_shape = (640, 640)
+
+
+@profile
+def evolve(grid, dt, D=1.0):
+    xmax, ymax = grid_shape
+    new_grid = [[0.0 for _ in range(grid_shape[1])] for _ in range(grid_shape[0])]
+
+    for i in range(xmax):
+        for j in range(ymax):
+            grid_xx = grid[(i + 1) % xmax][j] + grid[(i - 1) % xmax][j] - 2.0 * grid[i][j]
+            grid_yy = grid[i][(j + 1) % ymax] + grid[i][(j - 1) % ymax] - 2.0 * grid[i][j]
+            new_grid[i][j] = grid[i][j] + D * (grid_xx + grid_yy) * dt
+    return new_grid
+
+
+def run_experiment(num_iterations):
+    # setting up initial conditions
+    grid = [[0.0 for _ in range(grid_shape[1])] for _ in range(grid_shape[0])]
+
+    block_low = int(grid_shape[0] * 0.4)
+    block_high = int(grid_shape[0] * 0.5)
+    for i in range(block_low, block_high):
+        for j in range(block_low, block_high):
+            grid[i][j] = 0.005
+
+    start = time.time()
+    for i in range(num_iterations):
+        grid = evolve(grid, 0.1)
+    return time.time() - start
+
+
+if __name__ == "__main__":
+    run_experiment(500)
+
+```
+
+```
+kernprof -lv diffusion_python.py
+Wrote profile results to 'diffusion_python.py.lprof'
+Timer unit: 1e-06 s
+
+Total time: 6.8645 s
+File: diffusion_python.py
+Function: evolve at line 15
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    15                                           @profile
+    16                                           def evolve(grid, dt, D=1.0):
+    17        10         19.7      2.0      0.0      xmax, ymax = grid_shape
+    18        10     443494.2  44349.4      6.5      new_grid = [[0.0 for _ in range(grid_shape[1])] for _ in range(grid_shape[0])]
+    19
+    20      6410        786.2      0.1      0.0      for i in range(xmax):
+    21   4102400     487045.3      0.1      7.1          for j in range(ymax):
+    22   4096000    2252187.7      0.5     32.8              grid_xx = grid[(i + 1) % xmax][j] + grid[(i - 1) % xmax][j] - 2.0 * grid[i][j]
+    23   4096000    2143980.2      0.5     31.2              grid_yy = grid[i][(j + 1) % ymax] + grid[i][(j - 1) % ymax] - 2.0 * grid[i][j]
+    24   4096000    1536974.8      0.4     22.4              new_grid[i][j] = grid[i][j] + D * (grid_xx + grid_yy) * dt
+    25        10          7.2      0.7      0.0      return new_grid
+
+```
+
+`new_grid = [[0.0 for _ in range(grid_shape[1])] for _ in range(grid_shape[0])]`: 不管你将什么样的值传递给evolve，new_grid列表的形状和大小始终不变，且包含的值也相同。一种简单的优化是，只分配这个列表一次，并在需要时重用它.
+
+```
+Wrote profile results to 'diffusion_python_memory.py.lprof'
+Timer unit: 1e-06 s
+
+Total time: 6.5504 s
+File: diffusion_python_memory.py
+Function: evolve at line 14
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    14                                           @profile
+    15                                           def evolve(grid, dt, out, D=1.0):
+    16        10         15.2      1.5      0.0      xmax, ymax = grid_shape
+    17      6410        844.3      0.1      0.0      for i in range(xmax):
+    18   4102400     515039.1      0.1      7.9          for j in range(ymax):
+    19   4096000    2273849.1      0.6     34.7              grid_xx = grid[(i + 1) % xmax][j] + grid[(i - 1) % xmax][j] - 2.0 * grid[i][j]
+    20   4096000    2188745.8      0.5     33.4              grid_yy = grid[i][(j + 1) % ymax] + grid[i][(j - 1) % ymax] - 2.0 * grid[i][j]
+    21   4096000    1571908.9      0.4     24.0              out[i][j] = grid[i][j] + D * (grid_xx + grid_yy) * dt
+
+```
+
+### 使用pref分析
+
+谓冯·诺依曼瓶颈，指的是内存和CPU之间的带宽是有限的，这是由现代计算机使用的分层存储架构导致的。如果能够快速移动大量数据，就根本不需要高速缓存，因为CPU可立即获得所需的任何数据。在这种情况下，根本就不存在所谓的冯·诺依曼瓶颈。
+
+由于无法快速移动大量数据，因此必须预先从内存中取回数据，并将其存储在容量更小但速度更快的CPU高速缓存中，这样才有可能在CPU需要某项数据时，它已经位于可快速读取的地方。
+
+在Linux中，可使用工具perf非常深入地了解CPU是如何处理当前运行的程序的。
+
+```
+$ perf stat -e cycles,instructions,\
+    cache-references,cache-misses,branches,branch-misses,task-clock,faults,\
+    minor-faults,cs,migrations python diffusion_python_memory.py
+　
+　
+Performance counter stats for 'python diffusion_python_memory.py':
+　
+  415,864,974,126     cycles                    #    2.889 GHz
+1,210,522,769,388     instructions              #    2.91 insn per cycle
+      656,345,027     cache-references          #    4.560 M/sec
+      349,562,390     cache-misses              #   53.259 ٪ of all cache refs
+  251,537,944,600     branches                  # 1747.583 M/sec
+    1,970,031,461     branch-misses             #    0.78٪ of all branches
+    143934.730837     task-clock (msec)         #    1.000 CPUs utilized
+           12,791     faults                    #    0.089 K/sec
+           12,791     minor-faults              #    0.089 K/sec
+              117     cs                        #    0.001 K/sec
+                6     migrations                #    0.000 K/sec
+　
+    143.935522122 seconds time elapsed
+```
+
+#### 理解pref相关的指标
+
+task-clock指出任务占用了多少个时钟周期，这不同于总运行时间，因为如果程序的运行时间为1s，但使用了两个CPU，那么task-clock将为2000（task-clock的单位通常是ms）。
+
+Instructions指出代码发出了多少条CPU指令
+
+cycles指出为执行这些指令占用了多少个CPU周期。这两个数字之间的差异指出了代码在向量化和流水线化方面的情况如何
+
+cs（表示context switches）和CPU-migrations指出了程序为等待内核操作（如I/O）完成而停顿（并让其他应用程序运行）的情况以及将当前执行切换到另一个CPU核心的情况。
+
+一旦数据进入内存并被引用后，它将进入各个高速缓存层（L1/L2/L3高速缓存）。每次引用高速缓存中的数据时，指标cache-references的值都将增大。如果高速缓存中没有所需的数据，需要从内存获取，其被视为高速缓存缺失。
+
+### 使用numpy
+
+```python
+'''
+In [4]: vec = list(range(1000000))
+
+In [5]: %timeit norm_square_list(vec)
+39.7 ms ± 465 μs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+In [6]: %timeit norm_square_list_comprehension(vec)
+66.9 ms ± 6.72 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+In [7]: vec_array = array('l', range(1000000))
+
+In [8]: %timeit norm_square_array(vec_array)
+48.6 ms ± 829 μs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+In [9]: vec_np = np.arange(1000000)
+
+In [10]: %timeit norm_square_numpy(vec_np)
+2.37 ms ± 31.4 μs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+In [11]: %timeit norm_square_numpy_dot(vec_np)
+423 μs ± 12.1 μs per loop (mean ± std. dev. of 7 runs, 1,000 loops each)
+
+In [12]:
+'''
+
+from array import array
+
+import numpy as np
+
+
+def norm_square_list(vector):
+    norm = 0
+    for v in vector:
+        norm += v * v
+    return norm
+
+
+def norm_square_list_comprehension(vector):
+    return sum([v * v for v in vector])
+
+
+def norm_square_array(vector):
+    norm = 0
+    for v in vector:
+        norm += v * v
+    return norm
+
+
+def norm_square_numpy(vector):
+    return np.sum(vector * vector)
+
+
+def norm_square_numpy_dot(vector):
+    return np.dot(vector, vector)
+
+```
+
