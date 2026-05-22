@@ -193,5 +193,68 @@ In [3]: dis.dis(julia1_lineprofiler.calculate_z_serial_purepython)
 \frac{\partial}{\partial t} \boldsymbol{u}(x, t)=D \cdot \frac{\partial^{2}}{\partial x^{2}} \boldsymbol{u}(x, t)
 ```
 
-在这个方程中，u是表示液体量的向量。例如，可使用值为0的向量表示只有水，使用值为1的向量表示只有染料（值位于这两者之间的向量表示混合了两种液体）。
+在这个方程中，`u`是表示液体量的向量。例如，可使用值为0的向量表示只有水，使用值为1的向量表示只有染料（值位于这两者之间的向量表示混合了两种液体）。
+
+我们将使用离散体积和离散时间来逼近在时空上连续的扩散方程，为此我们将使用欧拉法。欧拉法以差分形式表示导数：
+
+```math
+\frac{\partial}{\partial t} \boldsymbol{u}(x, t) \approx \frac{\boldsymbol{u}(x, t+\mathrm{d} t)-\boldsymbol{u}(x, t)}{\mathrm{d} t}
+```
+
+其中`dt`是一个固定值。这个固定值表示时间步长，即要在什么样的时间分辨率上求解方程。
+
+因此，可重写这个方程，在给定`u(x,t)`的情况下，计算出`u(x, t + dt)`的值。这意味着可以从某种初始状态（`u(x,0)`，表示将一滴染料滴入一杯水中时）开始，根据刚才概述的计算状态的演化过程，看看未来的状态(`u(x,dt)`)是什么样的。这种问题被称为初始值问题或柯西问题(Cauchy problem)。
+
+对于x轴上的导数，可以用类似方式使用有限差分近似，得到最终的方程，如下所示：
+
+```math
+\boldsymbol{u}(x, t+\mathrm{d} t)=\boldsymbol{u}(x, t)+\mathrm{d} t \cdot D \cdot \frac{\boldsymbol{u}(x+\mathrm{d} x, t)+\boldsymbol{u}(x-\mathrm{d} x, t)-2 \cdot \boldsymbol{u}(x, t)}{\mathrm{d} x^{2}}
+```
+
+与`dt`表示帧率类似，其中的`dx`表示图像分辨率：`dx`越小，矩阵中每个单元格表示的区域就越小。
+
+对于我们要计算的每个时点的值，都可以使用一个矩阵来存储。因此，至少需要两个矩阵：一个用于存储液体当前的状态，另一个用于存储液体的下一个状态。
+
+```python
+# Create the initial conditions
+u = vector of length N
+for i in range(N):
+    u = 0 if there is water, 1 if there is dye
+# Evolve the initial conditions
+D = 1
+t = 0
+dt = 0.0001
+while True:
+    print(f"Current time is: {t}")
+    unew = vector of size N
+　
+    # Update step for every cell
+    for i in range(N):
+        unew[i] = u[i] + D * dt * (u[(i+1)٪N] + u[(i-1)٪N] - 2 * u[i])
+    # Move the updated solution into u
+    u = unew
+　
+    visualize(u)
+```
+
+这些代码根据水中染料的初始状态，计算出时间每流逝0.0001秒，整个系统是什么样的。结果如图6-1所示:
+
+![image-20260522114343522](.assets/image-20260522114343522.png)
+
+二维方程（以及求解代码）唯一的不同之处在于，还必须考虑y轴的二阶导数。这意味着需要将原来的扩散方程修改成下面这样：
+
+```math
+\frac{\partial}{\partial t} \boldsymbol{u}(x, y, t)=D \cdot\left(\frac{\partial^{2}}{\partial x^{2}} \boldsymbol{u}(x, y, t)+\frac{\partial^{2}}{\partial y^{2}} \boldsymbol{u}(x, y, t)\right)
+```
+
+使用前面的方法将这个二维扩散方程转换为伪代码：
+
+```python
+for i in range(N):
+    for j in range(M):
+        unew[i][j] = u[i][j] + dt * (
+            (u[(i + 1) % N][j] + u[(i - 1) % N][j] - 2 * u[i][j]) + # d^2 u / dx^2
+            (u[i][(j + 1) % M] + u[i][(j - 1) % M] - 2 * u[i][j]) # d^2 u / dy^2
+        )
+```
 
