@@ -1,0 +1,27 @@
+1. code formatter
+    black
+    isort
+    autopep8
+    ruff
+
+2. Linters
+    Ruff
+    Flake8
+    Pylint
+
+3. Static Type Checkers
+    Mypy
+    Pyright
+    Pyre
+    Pytype
+
+
+4. Language Servers / Code Completion
+    PyLance
+    jedi
+
+
+pylance + ruff 的重复部分：
+    导入语句整理 (Organize Imports)
+    未使用的变量/导入提示 (Unused Imports/Variables)
+
