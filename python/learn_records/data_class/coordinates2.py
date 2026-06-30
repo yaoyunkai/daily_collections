@@ -6,7 +6,6 @@ Created at 2023/4/8
 
 import typing
 
-
 # Coordinate = typing.NamedTuple('Coordinate', [('lat', float), ('lon', float)])
 # Coordinate = typing.NamedTuple('Coordinate', lat=float, lon=float)
 

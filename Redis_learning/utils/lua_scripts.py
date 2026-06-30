@@ -4,6 +4,7 @@ Lua 示例
 
 Created at 2023/3/25
 """
+
 import redis
 
 lua_demo1 = """
@@ -33,25 +34,25 @@ def test_send_command():
     ret = conn.eval(lua_demo1, 0)
     print(ret)
 
-    ret = conn.eval(lua_demo2, 0, 'hello world')
+    ret = conn.eval(lua_demo2, 0, "hello world")
     print(ret)
-    ret = conn.eval(lua_demo2, 0, 'hello Lua')
-    print(ret)
-
-    ret = conn.eval(lua_demo3, 2, 'key1', 'key2', 'dm1', 'dm2', 'dm4', 'dm5')
+    ret = conn.eval(lua_demo2, 0, "hello Lua")
     print(ret)
 
-    ret = conn.eval(lua_demo4, 1, 'foo', 'bar')
+    ret = conn.eval(lua_demo3, 2, "key1", "key2", "dm1", "dm2", "dm4", "dm5")
     print(ret)
 
-    ret = conn.get('foo')
+    ret = conn.eval(lua_demo4, 1, "foo", "bar")
+    print(ret)
+
+    ret = conn.get("foo")
     print(ret)
 
     ret = conn.script_load(lua_demo3)
     print(ret)
-    ret = conn.evalsha(ret, 2, 'key1', 'key2', 'dm1', 'dm2', 'dm4', 'dm5')
+    ret = conn.evalsha(ret, 2, "key1", "key2", "dm1", "dm2", "dm4", "dm5")
     print(ret)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_send_command()

@@ -43,8 +43,8 @@ import re
 # gbk: C4E3BAC3 CAC0BDE7
 text = "Hello 你好 World 世界"
 
-demo2 = int('C4E3BAC3CAC0BDE7', 16).to_bytes(8, 'big', signed=False)
-text2 = demo2.decode('gbk')
+demo2 = int("C4E3BAC3CAC0BDE7", 16).to_bytes(8, "big", signed=False)
+text2 = demo2.decode("gbk")
 
 pattern = re.compile("[\u4e00-\u9fff\ue7c7-\ue7f3\u8140-\u81fe]+")  # 或者 pattern = re.compile("\p{Han}")
 match = pattern.search(text2)
@@ -60,14 +60,14 @@ def delta(a, b):
     print(res)
 
 
-if __name__ == '__main__':
-    delta('0', '1111111')
-    delta('0', '1' * 11)
-    delta('0', '1' * 16)
-    delta('0', '1' * 21)
+if __name__ == "__main__":
+    delta("0", "1111111")
+    delta("0", "1" * 11)
+    delta("0", "1" * 16)
+    delta("0", "1" * 21)
 
-    demo3 = '·！￥……（）—【】、；：“‘？。，《》'
+    demo3 = "·！￥……（）—【】、；：“‘？。，《》"
 
     for i in demo3:
-        print(i.encode('utf8'))
+        print(i.encode("utf8"))
         print(hex(ord(i)))

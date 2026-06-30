@@ -23,19 +23,17 @@ Nov 30 16:47:45
 import datetime
 import re
 
-from sqlalchemy import String, Text
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, Session
-from sqlalchemy.orm import mapped_column, Mapped
+from sqlalchemy import String, Text, create_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 LOG_PATH1 = "20241130_164806_117_iPhone.log"
 ONE_MB = 1024 * 1024 * 1024
-MONTH_DESC = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+MONTH_DESC = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 YEAR = 2024
 
 PATTERN_LOG = re.compile(
-    r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}) '
-    r'iPhone ([a-zA-Z0-9().\-_]+)\[\d+\] <([a-zA-Z]+)>: '
+    r"((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}) "
+    r"iPhone ([a-zA-Z0-9().\-_]+)\[\d+\] <([a-zA-Z]+)>: "
 )
 
 engine = create_engine("mysql+mysqldb://root:password@localhost/sql_adv", pool_recycle=3600, echo=True)
@@ -46,7 +44,7 @@ class Base(DeclarativeBase):
 
 
 class Logs(Base):
-    __tablename__ = 'logs'
+    __tablename__ = "logs"
     id: Mapped[int] = mapped_column(primary_key=True)
     log_date: Mapped[datetime.datetime]
     log_process: Mapped[str] = mapped_column(String(100))
@@ -67,10 +65,10 @@ def to_datetime(val: str):
 def collect_logs(log_path=None, saved=False):
     if not log_path:
         log_path = LOG_PATH1
-    with open(log_path, mode='r', encoding='utf8') as fp:
+    with open(log_path, mode="r", encoding="utf8") as fp:
         content = fp.read()
 
-    content = str.replace(content, '\n', '')
+    content = str.replace(content, "\n", "")
     total_results = []
 
     start_pos = 0
@@ -78,7 +76,7 @@ def collect_logs(log_path=None, saved=False):
     while True:
         match_res = PATTERN_LOG.search(content, start_pos)
         if not match_res:
-            print('nothing to do')
+            print("nothing to do")
             break
 
         end_pos = match_res.end()
@@ -98,7 +96,7 @@ def collect_logs(log_path=None, saved=False):
             total_results.append([log_datetime, log_process, log_level, log_content])
             break
 
-    print(f'get {len(total_results)} logs')
+    print(f"get {len(total_results)} logs")
 
     if not saved:
         return
@@ -113,5 +111,5 @@ def collect_logs(log_path=None, saved=False):
         session.commit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     collect_logs(saved=False)
