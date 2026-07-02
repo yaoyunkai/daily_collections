@@ -77,7 +77,7 @@ class Order(Base):
         return OrderStateMachine(self, state_field="order_status")
 
 
-def check_model_ddl():
+def print_model_ddl():
     from sqlalchemy.dialects import postgresql
     from sqlalchemy.schema import CreateTable
 
@@ -115,10 +115,10 @@ def play_with_demo_order():
     for order in session.scalars(stmt):
         # print(order)
         # print(order.order_status)
-        print(order.machine.configuration)
+        print(order.machine)
 
 
 if __name__ == "__main__":
-    # play_with_demo_order()
+    play_with_demo_order()
     # check_model_ddl()
-    play_with_sm()
+    # play_with_sm()
