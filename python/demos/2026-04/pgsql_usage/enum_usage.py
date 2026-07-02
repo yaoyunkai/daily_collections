@@ -49,6 +49,9 @@ class OrderStateMachine(StateMachine):
     shop_ship = paid.to(shipped)
     user_signed = shipped.to(delivered)
 
+    def on_enter_paid(self):
+        print("on enter paid, order should prepare for ship")
+
 
 class Order(Base):
     __tablename__ = "demo_order"
@@ -61,7 +64,7 @@ class Order(Base):
         SQLEnum(
             OrderStatus,
             native_enum=False,
-            values_callable=lambda obj: [item.value for item in obj],
+            values_callable=lambda _obj: [item.value for item in _obj],
             length=32,
         ),
         nullable=False,
@@ -88,8 +91,8 @@ def play_with_sm():
     obj1.user_paid()
     print(f"current state: {obj1.configuration}")
 
-    obj2 = OrderStateMachine(start_value=OrderStatus.PAID)
-    print(f"obj2 current state: {obj2.configuration}")
+    # obj2 = OrderStateMachine(start_value=OrderStatus.PAID)
+    # print(f"obj2 current state: {obj2.configuration}")
 
 
 def play_with_demo_order():
@@ -108,6 +111,7 @@ def play_with_demo_order():
     #     session.add(order3)
     #     session.commit()
 
+    order: Order
     for order in session.scalars(stmt):
         # print(order)
         # print(order.order_status)
@@ -115,6 +119,6 @@ def play_with_demo_order():
 
 
 if __name__ == "__main__":
-    play_with_demo_order()
+    # play_with_demo_order()
     # check_model_ddl()
-    # play_with_sm()
+    play_with_sm()
