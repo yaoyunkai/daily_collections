@@ -7,13 +7,12 @@ created at 2026-07-03
 """
 
 import enum
-import pprint
 import random
 import uuid
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import DateTime, Integer, String, create_engine, func, select, text
+from sqlalchemy import DateTime, Integer, String, create_engine, func, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 engine = create_engine(
@@ -161,54 +160,5 @@ def get_this_month_sales_amount(msession: Session) -> int:
     return total_amount
 
 
-def get_monthly_sales_stats_raw_sql(session: Session):
-    sql = """
-        WITH user_first_pay AS (
-          SELECT user_id, MIN(pay_at) AS first_pay_at
-          FROM demo_pay_record
-          GROUP BY user_id
-        )
-        SELECT
-        -- 2. 将 UTC 时间转为东京时间，并按 YYYY-MM 格式化作为月份分组
-        TO_CHAR(r.pay_at AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM') AS month,
-        
-        -- 3. 计算总消费额
-        SUM(r.amount) AS total_amount,
-        
-        -- 4. 计算老客消费额：如果当前订单时间 > 首次消费时间，则算作老客消费
-        SUM(CASE WHEN r.pay_at > u.first_pay_at THEN r.amount ELSE 0 END) AS old_customer_amount
-        
-          FROM demo_pay_record r
-              JOIN user_first_pay u ON r.user_id = u.user_id
-          GROUP BY month
-          ORDER BY month; 
-          """
-
-    # 使用 text() 执行原生 SQL
-    results = session.execute(text(sql)).fetchall()
-
-    # 解析并组装返回数据
-    stats = []
-    for row in results:
-        # row 支持通过属性名(列名)直接访问
-        total = row.total_amount or 0
-        old_amount = row.old_customer_amount or 0
-        new_amount = total - old_amount
-
-        stats.append(
-            {
-                "month": row.month,
-                "total_amount": total,
-                "old_customer_amount": old_amount,
-                "new_customer_amount": new_amount,
-                "old_customer_ratio": f"{round((old_amount / total * 100), 2)}%" if total > 0 else "0%",
-            }
-        )
-
-    return stats
-
-
 if __name__ == "__main__":
-    ss = Session(engine)
-    # print(get_this_month_sales_amount(ss))
-    pprint.pprint(get_monthly_sales_stats_raw_sql(ss))
+    pass
