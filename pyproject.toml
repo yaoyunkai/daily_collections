@@ -9,7 +9,6 @@ dependencies = [
     "antlr4-python3-runtime>=4.13.2",
     "antlr4-tools>=0.2.2",
     "chardet>=7.4.0.post1",
-    "duckdb>=1.5.1",
     "factory-boy>=3.3.3",
     "faker>=40.11.1",
     "fastapi>=0.135.2",

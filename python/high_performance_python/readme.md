@@ -460,3 +460,89 @@ def norm_square_numpy_dot(vector):
 
 ```
 
+### 6.5 使用numexpr 
+
+模块numexpr可以将整个向量表达式编译成效率极高的代码，这些代码经过了优化，最大限度地减少了高速缓存缺失和占用的临时空间。
+
+```python
+#!/usr/bin/env python3
+
+import time
+
+import numexpr as ne
+from numpy import copyto, multiply, zeros
+
+try:
+    profile
+except NameError:
+    profile = lambda x: x
+
+grid_shape = (640, 640)
+
+
+def roll_add(rollee, shift, axis, out):
+    if shift == 1 and axis == 0:
+        out[1:, :] += rollee[:-1, :]
+        out[0, :] += rollee[-1, :]
+    elif shift == -1 and axis == 0:
+        out[:-1, :] += rollee[1:, :]
+        out[-1, :] += rollee[0, :]
+    elif shift == 1 and axis == 1:
+        out[:, 1:] += rollee[:, :-1]
+        out[:, 0] += rollee[:, -1]
+    elif shift == -1 and axis == 1:
+        out[:, :-1] += rollee[:, 1:]
+        out[:, -1] += rollee[:, 0]
+
+
+def laplacian(grid, out):
+    copyto(out, grid)
+    multiply(out, -4.0, out)
+    roll_add(grid, +1, 0, out)
+    roll_add(grid, -1, 0, out)
+    roll_add(grid, +1, 1, out)
+    roll_add(grid, -1, 1, out)
+
+
+@profile
+def evolve(grid, dt, out, D=1):
+    laplacian(grid, out)
+    ne.evaluate("out*D*dt+grid", out=out)
+
+
+def run_experiment(num_iterations):
+    scratch = zeros(grid_shape)
+    grid = zeros(grid_shape)
+
+    block_low = int(grid_shape[0] * 0.4)
+    block_high = int(grid_shape[0] * 0.5)
+    grid[block_low:block_high, block_low:block_high] = 0.005
+
+    start = time.time()
+    for i in range(num_iterations):
+        evolve(grid, 0.1, scratch)
+        grid, scratch = scratch, grid
+    return time.time() - start
+
+
+if __name__ == "__main__":
+    run_experiment(500)
+
+```
+
+## 7. 编译成c代码
+
+### 7.1 速度提升的方式
+
+对于执行数学运算的Python代码，通过编译通常可以提高运行速度。这种代码包含大量循环，而这些循环反复执行相同操作，还可能创建大量的临时对象。
+
+如果Python代码只使用了内置库，而没有使用numpy，那么对其进行编译时，主要使用Cython或PyPy。如果使用了numpy，那么编译时可以使用Cython或Numba。
+
+### 7.2 AOT & JIT
+
+分为两大类：预先(Ahead Of Time，AOT)编译工具，如Cython；即时编译工具，如Numba和PyPy。
+
+### 7.6 Cython
+
+Cython是一款编译器，将进行了类型标注（类似于C语言中的类型声明）的Python代码编译成编译型扩展模块。
+
