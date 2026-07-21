@@ -1,4 +1,4 @@
-> 词法解析工具
+# antlr4 权威指南
 
 **词法分析**（英语：lexical analysis）是计算机科学中将字符序列转换为标记（token）序列的过程。进行词法分析的程序或者函数叫作词法分析器（lexical analyzer，简称lexer），也叫扫描器（scanner）。词法分析器一般以函数的形式存在，供语法分析器调用。
 
@@ -10,7 +10,40 @@
 
 语法分析器（parser）它的作用是进行语法检查、并构建由输入的单词组成的数据结构（一般是语法分析树、抽象语法树等层次化的数据结构）。语法分析器通常使用一个独立的词法分析器从输入字符流中分离出一个个的“单词”，并将单词流作为其输入。
 
-# grammer lexicon
+```
+lexer & parser ??
+```
+
+**生成对应语言的文件**：
+
+`antlr4  -Dlanguage=Python3 Hello.g4`
+
+**Test Rig 的使用**
+
+```
+pygrun -h
+Usage: pygrun [options] Grammar_Name Start_Rule
+
+Options:
+  -h, --help         show this help message and exit
+  -t, --tree         Print AST tree
+  -k, --tokens       Show Tokens
+  -s, --sll          Show SLL
+  -d, --diagnostics  Enable diagnostics error listener
+  -a, --trace        Enable Trace
+
+pygrun -k Hello r
+hello parrt
+^Z
+[@0,0:4='hello',<1>,1:0]
+[@1,6:10='parrt',<2>,1:6]
+[@2,12:11='<EOF>',<-1>,2:0]
+
+pygrun -t Hello r
+hello parrt
+^Z
+(r hello parrt)
+```
 
 ## 语法模式
 
@@ -77,50 +110,55 @@ expr: ID '[' expr ']'  //a[1],a[b[1]],a[(2*b[1])]
     ;
 ```
 
-## 具体语法
+## 开始使用
 
-[GItHub 链接](https://github.com/antlr/antlr4/blob/master/doc/lexicon.md)
+### 2.1 ANTLR 元语言
 
-- 注释：和Java的注释完全一致，也可参考C的注释，只是增加了JavaDoc类型的注释；
-- 标志符：参考Java或者C的标志符命名规范，针对Lexer 部分的 Token 名的定义，采用全大写字母的形式，对于parser rule命名，推荐首字母小写的驼峰命名；不区分字符和字符串，都是用单引号引起来的，同时，虽然Antlr g4支持 Unicode编码（即支持中文编码），但是建议大家尽量还有英文；
-- Action，行为，主要有@header 和@members，用来定义一些需要生成到目标代码中的行为，例如，可以通过@header设置生成的代码的package信息，@members可以定义额外的一些变量到Antlr4语法文件中；
-- Antlr4语法中，支持的关键字有：import, fragment, lexer, parser, grammar, returns, locals, throws, catch, finally, mode, options, tokens。
+语言(language)由一系列有意义的语句组成，语句(sentence)由词组组成，词组(phrase)是由更小的子词组(subphrase)和词汇符号(vocabulary symbol)组成。
 
-整体结构如下：
+识别语言的程序称为语法分析器(parser)或者句法分析器(syntax analyzer)。句法(syntax)是指约束语言中的各个组成部分之间关系的规则，在本书中，我们会通过ANTLR语法来指定语言的句法。语法(grammar)是一系列规则的集合，每条规则表述出一种词汇结构。
 
-```text
-/** Optional javadoc style comment */
+- 将字符聚集为单词或者符号（词法符号，token）的过程称为词法分析(lexical analysis)或者词法符号化(tokenizing)。我们把可以将输入文本转换为词法符号的程序称为词法分析器(lexer)。
+- 第二个阶段是实际的语法分析过程，在这个过程中，输入的词法符号被“消费”以识别语句结构，在上例中即为赋值语句。默认情况下，ANTLR生成的语法分析器会建造一种名为语法分析树(parse tree)或者句法树(syntax tree)的数据结构，该数据结构记录了语法分析器识别出输入语句结构的过程，以及该结构的各组成部分。
 
-grammar Name;
+![image-20260721142240534](.assets/image-20260721142240534.png)
 
-options {...}
+语法分析树的内部节点是词组名，这些名字用于识别它们的子节点，并将子节点归类。
 
-import ... ;
-tokens {...}
+根节点是最抽象的一个名字，在本例中即stat（statement的简写）。语法分析树的叶子节点永远是输入的词法符号。
 
-channels {...} // lexer only
+### 2.2 语法分析器
 
-@actionName {...}
-rule1 // parser and lexer rules, possibly intermingled
+ANTLR工具依据类似于我们之前看到的assign的语法规则，产生一个递归下降的语法分析器(recursive-descent parser)。递归下降的语法分析器实际上是若干递归方法的集合，每个方法对应一条规则。下降的过程就是从语法分析树的根节点开始，朝着叶节点（词法符号）进行解析的过程。
 
-...
-
-ruleN
+```c
+// assgin: ID '=' expr ';' ;
+void assign() {
+	match(ID);
+	match('=');
+	expr();
+	match(';');
+}
 ```
 
-# 监听器和访问器
+当语法分析器进入assign()方法的内部时，仅有一个备选分支(alternative)，无须做出选择。一个备选分支指的是规则的右侧定义的多个方案之一。
 
-ANTLR除能够自动构建语法分析树外，还能生成基于Listener（监听者模式，通过节点监听，触发处理方法）和Visitor（访问者模式，主动遍历）的树遍历器。
+例如，除了assign之外，下面的stat规则还可能对应其他多种语句:
 
-访问者模式遍历语法树是一种更加灵活的方法，可以避免在文法文件中嵌入繁琐的动作，使解析与应用逻辑代码分离，这样不但文法的定义更加简洁清晰，而且可以在不重新编译生成语法分析器的情况下复用相同的语法，甚至能够采用不同的程序语言来实现这些动作。
+```
+stat: assign
+	| ifstat
+	| whilestat
+	;
+```
 
-## listener 监听器
+stat()方法必须通过检查下一个词法符号来做出语法分析决策(parsing decision)或者预测(prediction)。做出决策的过程实际上就是判断哪一个备选分支是正确的。一个前瞻词法符号是指任何一个在被匹配和消费之前就由语法分析器嗅探出的词法符号。有些时候，语法分析器需要很多个前瞻词法符号来判断语义规则的哪个方案是正确的。
 
-ANTLR为每个语法文件生成一个ParseTreeListener的子类，在该类中，语法中的每条规则都有对应的enter方法和exit方法，当访问到某节点时，就会调用相应的enter方法，访问完后就调用相应的exit方法。
+歧义性语句是指存在不止一种语义的语句。换句话说，歧义性语句中的单词序列能够匹配多种语法结构。
 
-## Visitor访问器
+### 2.4 使用语法分析树构建语言类应用
 
-访问者模式（Visitor Pattern）是一种将操作与对象结构分离的软件设计模式，提供作用于某种对象结构上各元素的操作，可以使我们在不改变元素结构的前提下，定义作用于元素的新操作。
+词法分析器处理字符序列并将生成的词法符号提供给语法分析器，语法分析器随即根据这些信息来检查语法的正确性并建造出一棵语法分析树。这个过程对应的ANTLR类是CharStream、Lexer、Token、Parser，以及ParseTree。
 
-这种模式的工作方法如下：假设有一个由许多元素Node构成的对象结构Tree，这些Node类都拥有一个accept方法用来接受访问者对象Visitor的访问；Visitor类是一个接口，它拥有一个visit方法，这个方法对访问到的Tree中不同类型的Node作出不同的反应；在对Tree的一次访问过程中会遍历整个Tree，对遍历到的每个Node都调用accept方法，在每个元素的accept方法中回调Visitor的visit方法，从而使Vistior得以处理Tree的每个Node；可以针对Tree设计不同的Visitor实现类来完成不同的操作。
+### 2.5 语法分析树Listener&Visitor
 

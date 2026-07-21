@@ -28,9 +28,9 @@ class HelloParser ( Parser ):
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "ID", "WS" ]
 
-    RULE_s = 0
+    RULE_r = 0
 
-    ruleNames =  [ "s" ]
+    ruleNames =  [ "r" ]
 
     EOF = Token.EOF
     T__0=1
@@ -46,7 +46,7 @@ class HelloParser ( Parser ):
 
 
 
-    class SContext(ParserRuleContext):
+    class RContext(ParserRuleContext):
         __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -57,23 +57,23 @@ class HelloParser ( Parser ):
             return self.getToken(HelloParser.ID, 0)
 
         def getRuleIndex(self):
-            return HelloParser.RULE_s
+            return HelloParser.RULE_r
 
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterS" ):
-                listener.enterS(self)
+            if hasattr( listener, "enterR" ):
+                listener.enterR(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitS" ):
-                listener.exitS(self)
+            if hasattr( listener, "exitR" ):
+                listener.exitR(self)
 
 
 
 
-    def s(self):
+    def r(self):
 
-        localctx = HelloParser.SContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 0, self.RULE_s)
+        localctx = HelloParser.RContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 0, self.RULE_r)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 2

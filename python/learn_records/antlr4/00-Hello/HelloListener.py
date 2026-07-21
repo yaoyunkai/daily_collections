@@ -8,12 +8,12 @@ else:
 # This class defines a complete listener for a parse tree produced by HelloParser.
 class HelloListener(ParseTreeListener):
 
-    # Enter a parse tree produced by HelloParser#s.
-    def enterS(self, ctx:HelloParser.SContext):
+    # Enter a parse tree produced by HelloParser#r.
+    def enterR(self, ctx:HelloParser.RContext):
         pass
 
-    # Exit a parse tree produced by HelloParser#s.
-    def exitS(self, ctx:HelloParser.SContext):
+    # Exit a parse tree produced by HelloParser#r.
+    def exitR(self, ctx:HelloParser.RContext):
         pass
 
 
