@@ -79,6 +79,12 @@ class ArrayInitParser ( Parser ):
             if hasattr( listener, "exitInit" ):
                 listener.exitInit(self)
 
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitInit" ):
+                return visitor.visitInit(self)
+            else:
+                return visitor.visitChildren(self)
+
 
 
 
@@ -140,6 +146,12 @@ class ArrayInitParser ( Parser ):
         def exitRule(self, listener:ParseTreeListener):
             if hasattr( listener, "exitValue" ):
                 listener.exitValue(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitValue" ):
+                return visitor.visitValue(self)
+            else:
+                return visitor.visitChildren(self)
 
 
 
