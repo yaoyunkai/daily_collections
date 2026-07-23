@@ -221,3 +221,80 @@ pygrun -k ArrayInit init
 
 ## 4. quick start
 
+### 4.1 匹配算术表达式的语法。
+
+```antlr4
+grammar Expr;
+
+/** The start rule; begin parsing here. */
+prog:   stat+ ; 
+
+stat:   expr NEWLINE                
+    |   ID '=' expr NEWLINE        
+    |   NEWLINE                   
+    ;
+
+expr:   expr ('*'|'/') expr   
+    |   expr ('+'|'-') expr   
+    |   INT                    
+    |   ID                    
+    |   '(' expr ')'         
+    ;
+
+ID  :   [a-zA-Z]+ ;      // match identifiers <label id="code.tour.expr.3"/>
+INT :   [0-9]+ ;         // match integers
+NEWLINE:'\r'? '\n' ;     // return newlines to parser (is end-statement signal)
+WS  :   [ \t]+ -> skip ; // toss out whitespace
+
+```
+
+这些规则既包括类似stat和expr的描述语法结构的规则，也包括描述标识符和整数之类的词汇符号（词法符号）的规则。
+
+- 语法分析器的规则以小写字母开头。
+- 词法分析器的规则以大写字母开头。
+- 使用|来分隔同一个语言规则的若干备选分支，使用圆括号把一些符号组合成子规则。
+
+#### 语法导入
+
+一个好主意是，将非常大的语法拆分成逻辑单元，正如我们在软件开发中所做的那样。拆分的方法之一是将语法分为两部分：语法分析器的语法和词法分析器的语法。
+
+```
+lexer grammar CommonLexerRules;
+
+grammar LibExpr;         // Rename to distinguish from original
+import CommonLexerRules; // includes all rules from CommonLexerRules.g4
+
+antlr4 LibExpr.g4 -Dlanguage=Python3
+```
+
+### 4.2 使用visitor构造计算器
+
+首先，我们需要给备选分支加上标签（这些标签可以是任意标识符，只要它们不与规则名冲突）。如果备选分支上面没有标签，ANTLR就只为每条规则生成一个方法
+
+```
+grammar LabeledExpr;
+
+prog: stat+;
+
+stat:
+	expr NEWLINE			# printExpr
+	| ID '=' expr NEWLINE	# assign
+	| NEWLINE				# blank;
+
+expr:
+	expr op = ('*' | '/') expr		# MulDiv
+	| expr op = ('+' | '-') expr	# AddSub
+	| INT							# int
+	| ID							# id
+	| '(' expr ')'					# parens;
+
+MUL: '*';
+DIV: '/';
+ADD: '+';
+SUB: '-';
+ID: [a-zA-Z]+;
+INT: [0-9]+;
+NEWLINE: '\r'? '\n';
+WS: [ \t]+ -> skip;
+```
+
