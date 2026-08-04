@@ -1,2 +1,5 @@
-2026-7-21 ANTLR4 权威指南
-2026-5-01 python高性能编程
+2026-7-21   ANTLR4 权威指南
+2026-5-01   python高性能编程
+2026-8-4    Guide to Expert, The Pragmatic PostgreSQL
+2026-8-4    测试驱动开发
+2026-8-4    图解大模型：生成式AI原理与实战
