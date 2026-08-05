@@ -3,3 +3,7 @@
 2026-8-4    Guide to Expert, The Pragmatic PostgreSQL
 2026-8-4    测试驱动开发
 2026-8-4    图解大模型：生成式AI原理与实战
+2026-8-5    SQL 进阶教程
+2026-8-5    深入理解并行编程 2edition
+2026-8-5    PostgreSQL指南
+
