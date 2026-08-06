@@ -151,3 +151,103 @@ demo1=# \x
 
 ## chp5. 数据类型
 
+### chp5.1 数据类型介绍
+
+#### 数据类型的输入与转换
+
+对于一些简单的数据类型，如数字或字符串，使用一般的方法输入就可以,
+
+对于复杂的数据类型，可以按照“类型名”加上单引号括起来的类型值格式来输入:
+
+```sql
+select 1, 3.1415, 'hello world';
+select bit '11101001111';
+select integer '1' + integer '2';
+
+select cast('5' as int), cast('2025-01-03' as date);
+select '5'::int, '2025-01-03'::date;
+```
+
+### chp5.2 boolean
+
+SQL使用三值的布尔逻辑：TRUE、FALSE和NULL，其中NULL代表“未知”。
+
+```sql
+expression is true;
+expr is not true;
+expr is false;
+expr is not false;
+expr is unknown;
+expr is not unknown;
+```
+
+### chp5.3 数值类型
+
+数值类型是最常用的几种数据类型之一，分为整型、浮点型、精确小数等类型
+
+| 类型名称          | 存储空间 | 描述             |
+| ----------------- | -------- | ---------------- |
+| smallint          | 2byte    | 小范围的整数     |
+| int / intgeter    | 4byte    |                  |
+| bigint            | 8byte    |                  |
+| numeric / decimal | 变长     | 用户声明的精度。 |
+| real              | 4byte    |                  |
+| double precision  | 8byte    |                  |
+| serial            | 4byte    |                  |
+| bigserial         | 8byte    |                  |
+
+整数类型有3种：smallint、int、bigint.
+
+精确的小数类型可用numeric、numeric(m,n)、numeric(m)表示：`select '455.56'::numeric(10, 4);`
+
+- **Precision（精度 - m）**：整个数值中所有有效数字的总位数（小数点左边和右边的数字总和）。
+- **Scale（标度 - n）**：小数点右边的数字位数。
+
+推荐使用 `numeric` 的场景
+
+- **金融和货币计算**：如商品价格、账户余额、税率、利息等。在这些场景中，浮点数（如 `real` 或 `double precision`）的四舍五入误差是不可接受的。
+- **需要绝对精确的科学计算**：对计算精度有极高要求的特定领域。
+
+避免使用 `numeric(m)` 存储纯整数。
+
+数据类型real和double precision是不精确的、变精度的数字类型。
+
+#### 货币类型
+
+货币类型可以存储固定小数的货币数目，与浮点数不同，它是完全保证精度的。其输出格式与参数lc_monetary的设置有关，不同的国家其货币输出格式也不相同。
+
+```sql
+select '12.34'::money;
+show lc_monetary;
+set lc_monetary  = 'en_US.UTF-8';
+
+```
+
+### chp5.4 字符串类型
+
+| 类型                              | 描述               |
+| --------------------------------- | ------------------ |
+| character varying(n) / varchar(n) | 变长               |
+| character(n) / char(n)            | 定长               |
+| text                              | 变长，无长度限制。 |
+
+在PostgreSQL中，定长的character(n)与varchar(n)没有差别。故在大多数情况下，建议使用text或varchar。
+
+在 PostgreSQL 中，`varchar(n)` 中的 `n` 限制的是**字符数（Characters）**
+
+我们可以通过 PostgreSQL 的内置函数来直观地看到这种区别：
+
+- **获取字符长度**：使用 `length('你好')` 或 `char_length('你好')`，返回的结果是 **2**。
+- **获取字节长度**：使用 `octet_length('你好')`，在 UTF-8 字符集下返回的结果是 **6**。
+
+### chp5.7 日期类型
+
+| Name                                        | Storage Size | Description                           | Low Value        | High Value      | Resolution    |
+| ------------------------------------------- | ------------ | ------------------------------------- | ---------------- | --------------- | ------------- |
+| `timestamp [ (p) ] [ without time zone ]` | 8 bytes      | both date and time (no time zone)     | 4713 BC          | 294276 AD       | 1 microsecond |
+| `timestamp [ (p) ] with time zone`      | 8 bytes      | both date and time, with time zone    | 4713 BC          | 294276 AD       | 1 microsecond |
+| `date`                                      | 4 bytes      | date (no time of day)                 | 4713 BC          | 5874897 AD      | 1 day         |
+| `time [ (p) ] [ without time zone ]`    | 8 bytes      | time of day (no date)                 | 00:00:00         | 24:00:00        | 1 microsecond |
+| `time [ (p) ] with time zone`           | 12 bytes     | time of day (no date), with time zone | 00:00:00+1559    | 24:00:00-1559   | 1 microsecond |
+| `interval [ fields ] [ (p) ]`       | 16 bytes     | time interval                         | -178000000 years | 178000000 years | 1 microsecond |
+
