@@ -251,3 +251,50 @@ set lc_monetary  = 'en_US.UTF-8';
 | `time [ (p) ] with time zone`           | 12 bytes     | time of day (no date), with time zone | 00:00:00+1559    | 24:00:00-1559   | 1 microsecond |
 | `interval [ fields ] [ (p) ]`       | 16 bytes     | time interval                         | -178000000 years | 178000000 years | 1 microsecond |
 
+PostgreSQL中的时间类型可以精确到秒以下, `time`、`timestamp`、`interval`接受一个可选的精度值p以指明秒域中小数部分的位数。如果没有明确的默认精度，对于timestamp和interval类型，p的取值范围是0～6。
+
+在SQL中，任何日期或者时间的文本输入都需要由“日期/时间”类型加单引号括起来的字符串组成:
+
+```sql
+type [ (p) ] 'value';
+
+select date '2022-12-21' as my_date;
+
+# 显示日期格式
+show datestyle;
+```
+
+CST在PostgreSQL中代表Central Standard Time (USA) UT-6:00，缩写可以查询视图“pg_timezone_abbrevs”：
+
+```sql
+select * from pg_timezone_abbrevs where abbrev = 'CST';
+```
+
+### chp5.8 枚举类型
+
+创建一个枚举类型：
+
+```sql
+CREATE TYPE week AS ENUM ('Sun','Mon','Tues','Wed','Thur','Fri', 'Sat');
+CREATE TABLE duty(person text, weekday week);
+INSERT INTO duty values（'张三', 'Sun'）;
+INSERT INTO duty values（'李四', 'Mon'）;
+INSERT INTO duty values（'王二', 'Tues'）;
+INSERT INTO duty values（'赵五', 'Wed'）;
+```
+
+使用如下命令查询所有的枚举类型：
+
+```sql
+select * from pg_enum;
+
+17240,17238,1,Sun
+17242,17238,2,Mon
+17244,17238,3,Tues
+17246,17238,4,Wed
+17248,17238,5,Thus
+17250,17238,6,Fri
+17252,17238,7,Sat
+
+```
+
